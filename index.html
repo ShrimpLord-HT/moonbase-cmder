@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#091321">
+  <title>Moonbase Commander | Junior Astronaut Trainer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">◈</span> MOONBASE <strong>COMMANDER</strong></div>
+      <span class="top-pill"><span class="live-dot"></span> MISSION CONTROL / TRAINING MODE</span>
+    </header>
+
+    <section class="intro" aria-labelledby="mission-title">
+      <div>
+        <p class="eyebrow">MISSION 01 <span class="line"></span> LUNAR OUTPOST</p>
+        <h1 id="mission-title">Keep the lights <em>on.</em><br>Bring the science <em>home.</em></h1>
+        <p class="intro-text">Survive three lunar shifts and transmit at least one science report. Sunlight charges your solar panels. Shadows don't. Every choice has a cost.</p>
+      </div>
+      <div class="moon-art" aria-hidden="true">
+        <div class="moon"></div>
+        <div class="lander"><span class="antenna"></span><span class="roof"></span><span class="base"></span><span class="legs"></span></div>
+      </div>
+    </section>
+
+    <section class="dashboard" aria-label="Mission dashboard">
+      <div class="panel mission-panel">
+        <div class="panel-heading"><span>01 / MISSION TIMELINE</span><span id="shift-label">SHIFT 1 OF 3</span></div>
+        <div class="timeline" id="timeline" aria-label="Three-shift forecast"></div>
+        <div class="forecast-note"><span class="small-star">✳</span> <span id="forecast-note">Solar panels generate +4 energy in sunlight.</span></div>
+      </div>
+      <div class="panel battery-panel">
+        <div class="panel-heading"><span>02 / POWER RESERVES</span><span class="metric-tag">LIVE</span></div>
+        <div class="metric-row"><div><span class="metric-number" id="battery">3</span><span class="metric-unit"> / 9 units</span></div><span class="metric-symbol">ϟ</span></div>
+        <div class="meter" aria-label="Battery level"><div id="battery-bar" style="width:33.33%"></div></div>
+        <p class="metric-note">Habitat systems use <b>2</b> energy each shift.</p>
+      </div>
+      <div class="panel oxygen-panel">
+        <div class="panel-heading"><span>03 / LIFE SUPPORT</span><span class="metric-tag">CREW SAFE</span></div>
+        <div class="metric-row"><div><span class="metric-number" id="oxygen">3</span><span class="metric-unit"> / 3 oxygen safety</span></div><span class="metric-symbol oxygen-symbol">◉</span></div>
+        <div class="meter oxygen-meter" aria-label="Oxygen safety"><div id="oxygen-bar" style="width:100%"></div></div>
+        <p class="metric-note">Saving power reduces life support by <b>1</b>.</p>
+      </div>
+    </section>
+
+    <div class="bottom-grid">
+      <section class="panel decisions" aria-labelledby="decisions-title">
+        <div class="panel-heading"><span>04 / YOUR NEXT MOVE</span><span id="report-status">REPORTS SENT: 0 / 1</span></div>
+        <h2 id="decisions-title">Command the next shift.</h2>
+        <p class="helper">Choose one action. The forecast and costs apply to this shift immediately.</p>
+        <div class="choices" id="choices">
+          <button type="button" class="choice primary" data-action="report">
+            <span class="choice-icon">↗</span><span class="choice-text"><b>Send report</b><small>Transmit scientific findings</small></span><span class="cost">−2 energy</span>
+          </button>
+          <button type="button" class="choice" data-action="hold">
+            <span class="choice-icon">⏸</span><span class="choice-text"><b>Hold steady</b><small>Keep normal operations running</small></span><span class="cost">No extra cost</span>
+          </button>
+          <button type="button" class="choice" data-action="save">
+            <span class="choice-icon">⌁</span><span class="choice-text"><b>Save power</b><small>Lower energy use, reduce life support</small></span><span class="cost">Save 1 energy</span>
+          </button>
+        </div>
+        <p class="rule">RULE: battery must stay above zero, and oxygen safety must stay above zero. Send a report before shift 3 ends.</p>
+      </section>
+      <aside class="panel log-panel" aria-labelledby="log-title">
+        <div class="panel-heading"><span>05 / MISSION LOG</span><span class="green-text">● CONNECTION ACTIVE</span></div>
+        <h2 id="log-title">Flight recorder</h2>
+        <div class="log" id="log" aria-live="polite"><p class="log-entry"><span class="log-time">00:00</span> Systems online. Awaiting your first command.</p></div>
+        <div class="result" id="result" role="status" hidden></div>
+        <button type="button" id="restart" class="restart">↻ Restart mission</button>
+      </aside>
+    </div>
+    <footer>EDUCATIONAL PROTOTYPE <span>·</span> Simplified rules, not an actual lunar operations simulator <span>·</span> Stage 1 MVP</footer>
+  </main>
+</body>
+</html>
