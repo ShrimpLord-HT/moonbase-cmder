@@ -24,8 +24,8 @@ Open `index.html` in Firefox or Chrome. No installation, server, or npm required
 ## File roles
 
 - `index.html`: screen content and layout elements (good for UI teammate).
-- `style.css`: colors, layout, responsive design (good for UI teammate).
-- `game.js`: mission state, rules, decisions, outcomes (good for game-logic teammate).
+- `classic/style.css`: colors, layout, responsive design (good for UI teammate).
+- `shared/game.js`: mission state, rules, decisions, outcomes (good for game-logic teammate).
 
 ## Next steps, in priority order
 
