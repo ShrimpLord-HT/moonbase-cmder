@@ -7,7 +7,7 @@ cd "$env:USERPROFILE\moonbase-cmder"
 python -m http.server 8127 --bind 127.0.0.1
 ```
 
-Open [the surface tutorial](http://127.0.0.1:8127/3d-test.html) or [the classic mission](http://127.0.0.1:8127/index.html). Stop the server with Ctrl+C. The 3D tutorial requires WebGL 2 and internet access to load Three.js 0.187.0. No build step or npm install is needed.
+Open [the intro and mission menu](http://127.0.0.1:8127/). Choose Mission 1 in 3D or open its 2D dashboard. The header lets you switch views without losing progress in this tab. A finished run returns to mission selection with its result and replay options. Stop the server with Ctrl+C. The 3D tutorial requires WebGL 2 and internet access to load Three.js 0.187.0. No build step or npm install is needed.
 
 Choose **Deploy to surface**. Walk with **WASD**, click the scene for mouse look (Esc releases it), or drag to look. Press **V** to switch between helmet and third-person views. On touchscreens, use the arrow pad, drag the scene to look, and tap the view button.
 
