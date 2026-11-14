@@ -5,7 +5,7 @@ decision-making, and space exploration.
 Built for NASA Space Apps Challenge 2026.
 
 ## 👨‍🚀 Team
-A two-person international student team.
+A three-person international student team.
 
 ## 🚧 Status
 Currently in development.
