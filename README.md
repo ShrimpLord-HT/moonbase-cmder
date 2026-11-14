@@ -1,17 +1,16 @@
-# 🌕 Moonbase commander: 
-An interactive lunar exploration game where young
-astronauts follow their curiosity, gather evidence,
-and share their first discoveries with Earth.
+# 🌕Moonbase commander: 
+An interactive lunar survival game where young
+astronauts learn about resource management,
+decision-making, and space exploration.
 Built for NASA Space Apps Challenge 2026.
 
-## 👨‍🚀 Team
+## Team
 A three-person international student team.
 
-## 🚧 Status
+## Status
 Currently in development.
 
 ## Project layout
-
 | Area | Where to look |
 | --- | --- |
 | Intro and mission selection | [index.html](index.html), [launch/](launch/) |
