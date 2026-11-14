@@ -40,24 +40,6 @@ dialog::backdrop { background: #04070b99; } dialog h2 { margin: 6px 0 16px; }
 dialog button { display: flex; width: 100%; justify-content: space-between; align-items: center; margin-top: 8px; }
 dialog button span { font-size: 12px; color: #bfc8d0; } #close { justify-content: center; background: transparent; }
 
-/* A radio fix crossing the lunar limb, drawn entirely with CSS. */
-#radio-boot { inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #080f16; }
-.uplink { min-height: 100%; position: relative; isolation: isolate; overflow: hidden; display: grid; align-items: center; padding: 6vw; background: radial-gradient(ellipse at 76% 54%, #1d343d, transparent 57%); }
-.radio-copy { position: relative; max-width: 60ch; }
-#boot-title { margin: 0.22em 0; font-size: clamp(44px, 8vw, 116px); line-height: .94; letter-spacing: -.065em; }
-#boot-title em { font-style: normal; color: var(--amber); }
-.reply { color: #b9dce0; font: 16px/1.5 Consolas, monospace; animation: radio-reply .4s 1.25s both; }
-#skip-radio { width: auto; margin-top: 28px; }
-.receiver { position: absolute; z-index: -1; width: min(54vw, 72vh); aspect-ratio: 1; right: -1%; top: 50%; transform: translateY(-50%) rotate(-18deg); border: 1px dashed #83a2a555; border-radius: 50%; }
-.receiver::before { content: ""; position: absolute; inset: 7%; border: 1px solid #809d9c4d; border-radius: 50%; }
-.lunar-disc { position: absolute; inset: 17%; border-radius: 50%; box-shadow: -3px -1px 12px #c1dcd63b;
-  background: radial-gradient(circle at 34% 29%, #667a7d 0 5%, transparent 5.8%), radial-gradient(circle at 23% 53%, #768b8e 0 8%, transparent 9%), radial-gradient(circle at 42% 66%, #405459 0 4%, transparent 5%), radial-gradient(ellipse at 95% 58%, #0c1820 41%, #435962 65%, #d0ded7 91%); }
-.receiver i { position: absolute; inset: 0; transform: rotate(35deg); animation: radio-pass 2.8s ease-out both; }
-.receiver i::before { content: ""; position: absolute; top: -4px; left: 50%; width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 14px var(--amber); }
-@keyframes radio-pass { from { transform: rotate(-85deg); } }
-@keyframes radio-reply { from { opacity: 0; transform: translateY(4px); } }
-@media (max-width: 650px) { .uplink { align-items: end; padding: 8vw 6vw 12vh; } .receiver { width: min(65vw, 42vh); right: 2%; top: 24%; } }
-@media (prefers-reduced-motion: reduce) { .reply, .receiver i { animation: none; } }
 @media (max-width: 720px) { .camera-tools { top: auto; bottom: 12px; } #use { bottom: 26%; } .objective { top: 125px; } #help { max-width: 62vw; } #briefing { padding: 16px; left: 3vw; background: #0c1018ce; } }
 @media (pointer: coarse), (any-pointer: coarse) {
   .desktop { display: none; } .mobile { display: inline; }
@@ -68,6 +50,7 @@ dialog button span { font-size: 12px; color: #bfc8d0; } #close { justify-content
 @media (max-height: 490px) { #briefing { top: 56px; bottom: 0; transform: none; overflow-y: auto; } h1 { font-size: 36px; } #timeline { margin: 10px 0; } }
 
 
-.debrief-link { display: inline-block; color: var(--amber); padding: 8px 0; }
 .surface-nav { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: flex-end; }
+.credits-link { color: #b0c4c9; font: 10px/1.5 Consolas, monospace; text-underline-offset: 3px; }
+.camera-tools .credits-link { font-size: 9px; text-align: right; }
 @media (max-width: 520px) { header .brand { font-size: 10px; } .surface-nav { gap: 5px 12px; } .surface-nav a { font-size: 11px; } }

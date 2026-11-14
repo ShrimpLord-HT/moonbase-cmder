@@ -160,7 +160,7 @@ scene.add(new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xb8
 // Signs stay attached to the equipment in both camera views.
 const obstacles = [habitat];
 const stations = [];
-function makeConsole(name, x, z, color) {
+function makeConsole(id, name, x, z, color) {
   const terminal = new THREE.Group();
   const housing = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.05, 0.55), metal);
   housing.position.y = 0.525;
@@ -172,6 +172,13 @@ function makeConsole(name, x, z, color) {
   scene.add(terminal);
   obstacles.push(terminal);
 
+  addLabel(name, x, groundHeight(x, z) + 1.5, z, color);
+  const lamp = new THREE.PointLight(color, 1.8, 5);
+  lamp.position.set(x, groundHeight(x, z) + 1.1, z + 0.55);
+  scene.add(lamp);
+  stations.push({ id, name, x, z });
+}
+function addLabel(name, x, y, z, color) {
   const label = document.createElement("canvas");
   label.width = 512; label.height = 88;
   const ctx = label.getContext("2d");
@@ -181,22 +188,51 @@ function makeConsole(name, x, z, color) {
   ctx.textAlign = "center"; ctx.fillText(name.toUpperCase(), 256, 57);
   const texture = new THREE.CanvasTexture(label);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture }));
-  sign.scale.set(2.25, 0.39, 1); sign.position.set(x, 1.42, z);
+  const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, sizeAttenuation: false }));
+  sign.scale.set(0.23, 0.04, 1); sign.position.set(x, y, z);
   scene.add(sign);
-  const lamp = new THREE.PointLight(color, 2, 6);
-  lamp.position.set(x, 1.1, z + 0.55);
-  scene.add(lamp);
-  stations.push({ name, x, z, lamp });
 }
-makeConsole("Communications", 0, -4, "#8ae5f1");
-makeConsole("Habitat", -0.9, 4.6, "#ffc267");
+makeConsole("communications", "Communications", 0, -4, "#8ae5f1");
+makeConsole("habitat", "Habitat", -0.9, 4.6, "#a6cdb9");
+for (const site of Object.values(Mission1.sites)) {
+  makeConsole(site.id, site.name, site.x, site.z, site.id === "shadow" ? "#b5d6f2" : "#ffc267");
+}
+// Pip stays at the landing point and guides the player by radio. No pathfinding needed.
+const pip = new THREE.Group();
+const pipShell = new THREE.MeshStandardMaterial({ color: 0xd4dbce, roughness: 0.65 });
+const pipDark = new THREE.MeshStandardMaterial({ color: 0x203540 });
+function pipPart(geometry, material, x, y, z, parent = pip) {
+  const part = new THREE.Mesh(geometry, material);
+  part.position.set(x, y, z); part.castShadow = true; parent.add(part); return part;
+}
+pipPart(new THREE.BoxGeometry(0.7, 0.3, 0.64), pipShell, 0, 0.36, 0);
+for (const x of [-0.38, 0.38]) for (const z of [-0.23, 0.23]) {
+  pipPart(new THREE.CylinderGeometry(0.16, 0.16, 0.13, 12), pipDark, x, 0.2, z).rotation.z = Math.PI / 2;
+}
+const pipHead = new THREE.Group(); pipHead.position.y = 0.75; pip.add(pipHead);
+pipPart(new THREE.BoxGeometry(0.65, 0.38, 0.4), pipShell, 0, 0, 0, pipHead);
+pipPart(new THREE.BoxGeometry(0.55, 0.25, 0.03), pipDark, 0, 0, 0.22, pipHead);
+const eyes = new THREE.MeshBasicMaterial({ color: 0x8ae5f1 });
+for (const x of [-0.14, 0.14]) pipPart(new THREE.SphereGeometry(0.055, 12, 8), eyes, x, 0.01, 0.25, pipHead);
+pipPart(new THREE.CylinderGeometry(0.015, 0.015, 0.26, 8), pipShell, 0.15, 0.3, 0, pipHead);
+pipPart(new THREE.SphereGeometry(0.045, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffc267 }), 0.15, 0.46, 0, pipHead);
+pip.position.set(1.6, groundHeight(1.6, 6), 6);
+scene.add(pip); obstacles.push(pip);
+stations.push({ id: "pip", name: "Pip", x: 1.6, z: 6 });
+addLabel("Pip / your buddy", 1.6, pip.position.y + 1.55, 6, "#ffc267");
+const marker = new THREE.Group();
+const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffc267, transparent: true, opacity: 0.5, depthWrite: false });
+const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 2.5, 8), markerMaterial);
+beacon.position.y = 1.25;
+const beaconTop = new THREE.Mesh(new THREE.OctahedronGeometry(0.13), new THREE.MeshBasicMaterial({ color: 0xffc267 }));
+beaconTop.position.y = 2.65;
+marker.add(beacon, beaconTop); scene.add(marker);
 const panelBounds = [-3.2, 3.2].map(x => new THREE.Box3(
   new THREE.Vector3(x - 1.68, -0.16, -5.7), new THREE.Vector3(x + 1.68, 1.45, -3.3)
 ));
 const solids = obstacles.map(object => new THREE.Box3().setFromObject(object)).concat(panelBounds);
 
-runTutorial({ THREE, scene, camera, renderer, sunlight, groundHeight, stations, solids });
+runTutorial({ THREE, scene, camera, renderer, groundHeight, stations, solids, marker, pipHead });
 
 
 

@@ -1,89 +1,99 @@
-// Run with: node tests/mission-flow.cjs (no packages needed).
+// Run with node tests/mission-flow.cjs. No browser, framework, or packages needed.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const root = path.join(__dirname, "..");
-const key = "moonbase.surface.mission1.v1";
+const Mission1 = require("../shared/mission1.js");
+const key = "moonbase.expedition.mission1.v2";
+const journalKey = "moonbase.journal.mission1.v1";
+const oldKey = "moonbase.surface.mission1.v1";
+const storageAPI = map => ({ getItem: name => map.get(name) ?? null, setItem: (name, value) => map.set(name, value) });
+function page(session, local) {
+  const context = vm.createContext({ Mission1, sessionStorage: storageAPI(session), localStorage: storageAPI(local) });
+  vm.runInContext(fs.readFileSync(path.join(root, "shared/surface-run.js"), "utf8"), context);
+  return vm.runInContext("surfaceRun", context);
+}
 
-function page(storage, { dashboard = false, search = "", hash = "", surface = false } = {}) {
+for (const order of [["shadow", "sunlit"], ["sunlit", "shadow"]]) {
+  const session = new Map([[oldKey, '{"actions":["report"]}']]);
+  const local = new Map();
+  let current = page(session, local);
+  let state = current.begin().state;
+  assert.equal(state.reported, false);
+  assert.equal(Mission1.submit(state).reported, false, "An empty report must not succeed");
+  state = Mission1.observe(state, order[0]);
+  current.update(state);
+  assert.equal(Mission1.submit(state).reported, false, "One reading is insufficient");
+  const first = state;
+  state = Mission1.observe(state, order[0]);
+  assert.equal(state, first, "Repeated inspections must not duplicate progress");
+  assert.equal(Mission1.next(state).id, order[1]);
+  const pose = { x: 4, z: 5, yaw: 0.4, pitch: 0, third: true, shiftLocked: false };
+  current.checkpoint(pose);
+  // A new page represents switching between the 2D and 3D views.
+  current = page(session, local);
+  const saved = current.load();
+  assert.deepEqual(saved.state.observations, [order[0]]);
+  assert.equal(saved.pose.x, 4);
+  assert.equal(saved.pose.third, true);
+  state = Mission1.observe(saved.state, order[1]);
+  assert.equal(Mission1.next(state).id, "communications");
+  state = Mission1.submit(state);
+  current.update(state);
+  current.saveJournal(state);
+  assert.equal(current.load().state.reported, true);
+  assert.equal(current.getJournal().state.reported, true);
+  assert.equal(current.sessionSaved, true);
+  assert.equal(current.journalSaved, true);
+  assert.equal(Mission1.observe(state, "shadow"), state);
+  current.begin();
+  assert.equal(current.load().state.observations.length, 0, "Replay starts a fresh expedition");
+  assert.equal(current.getJournal().state.reported, true, "Replay must keep the last keepsake");
+  current = page(new Map(), local);
+  assert.equal(current.load(), null, "Closing a tab starts a new active run");
+  assert.equal(current.getJournal().state.reported, true, "The keepsake survives a closed tab");
+  assert.equal(session.get(oldKey), '{"actions":["report"]}', "Leave old survival saves untouched");
+  assert.ok(local.has(journalKey));
+}
+for (const invalid of [null, {}, { observations: ["unknown"], reported: false },
+  { observations: ["shadow", "shadow"], reported: false }, { observations: [], reported: true },
+  { observations: ["shadow"], reported: "true" }]) assert.equal(Mission1.restore(invalid), null);
+assert.equal(Mission1.observe(Mission1.create(), "__proto__").observations.length, 0);
+const corrupt = page(new Map([[key, '{"state":{"observations":["invalid"],"reported":false}}']]), new Map());
+assert.equal(corrupt.load(), null);
+assert.equal(corrupt.begin().state.reported, false);
+const blockedContext = vm.createContext({ Mission1,
+  sessionStorage: { getItem() { throw Error("blocked"); }, setItem() { throw Error("blocked"); } },
+  localStorage: { getItem() { throw Error("blocked"); }, setItem() { throw Error("blocked"); } }
+});
+vm.runInContext(fs.readFileSync(path.join(root, "shared/surface-run.js"), "utf8"), blockedContext);
+const blocked = vm.runInContext("surfaceRun", blockedContext);
+let state = blocked.begin().state;
+state = Mission1.submit(Mission1.observe(Mission1.observe(state, "shadow"), "sunlit"));
+blocked.update(state); blocked.saveJournal(state);
+assert.equal(blocked.load().state.reported, true);
+assert.equal(blocked.getJournal().state.reported, true);
+assert.equal(blocked.sessionSaved, false);
+assert.equal(blocked.journalSaved, false);
+
+// Keep a focused regression check for the original standalone survival game.
+function classicRun(actions) {
   const elements = new Map();
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
-      textContent: "", innerHTML: "", hidden: false, style: {}, dataset: {}, listeners: {},
-      classList: { contains(name) { return elements.get(id).className?.split(" ").includes(name); }, toggle() {} },
-      addEventListener(name, listener) { (this.listeners[name] ||= []).push(listener); },
-      replaceChildren() { this.textContent = ""; }, prepend() {}, append() {}, focus() {},
-      querySelector() { return { textContent: this.innerHTML.match(/<p>(.*?)<\/p>/)?.[1] }; },
-      click() { if (!this.disabled) this.listeners.click?.forEach(listener => listener()); }
+      textContent: "", innerHTML: "", style: {}, className: "", hidden: true,
+      addEventListener() {}, append() {}, prepend() {}
     });
     return elements.get(id);
   }
-  const choices = ["report", "hold", "save"].map(action => {
-    const button = element(action);
-    button.dataset.action = action;
-    return button;
-  });
-  const context = vm.createContext({
-    document: {
-      body: { hasAttribute: name => dashboard && name === "data-dashboard" },
-      getElementById: id => id === "scene" ? (surface ? element(id) : null) : element(id),
-      querySelectorAll: () => choices, createElement: () => element(Symbol()), createTextNode: text => text
-    },
-    sessionStorage: { getItem: name => storage.get(name) ?? null, setItem: (name, value) => storage.set(name, value) },
-    location: { search, hash, pathname: dashboard ? "/dashboard.html" : "/index.html", assign(url) { this.destination = url; } },
-    history: { replaceState() { context.location.search = ""; } },
-    URLSearchParams, addEventListener() {}, scrollTo() {}
-  });
-  const script = file => vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), context);
-  const state = () => JSON.parse(vm.runInContext("JSON.stringify(mission)", context));
-  return { context, element, script, state };
+  const context = vm.createContext({ document: {
+    getElementById: element, querySelectorAll: () => [], createElement: () => element(Symbol()), createTextNode: value => value
+  } });
+  vm.runInContext(fs.readFileSync(path.join(root, "shared/game.js"), "utf8"), context);
+  for (const action of actions) vm.runInContext(`takeAction(${JSON.stringify(action)})`, context);
+  return { state: JSON.parse(vm.runInContext("JSON.stringify(mission)", context)), result: element("result").className };
 }
-function game(storage, options) {
-  const current = page(storage, options);
-  current.script("shared/game.js");
-  current.script("shared/surface-run.js");
-  return current;
-}
-
-const storage = new Map();
-let current = game(storage, { dashboard: true });
-current.element("report").click();
-assert.equal(current.state().shift, 1);
-assert.equal(JSON.parse(storage.get(key)).actions.length, 1);
-// Reopening the 2D dashboard replays, rather than duplicates, the saved commands.
-current = game(storage, { dashboard: true });
-assert.equal(current.state().reports, 1);
-assert.equal(JSON.parse(storage.get(key)).actions.length, 1);
-// The 3D view resumes that same state and records its terminal command.
-current = game(storage, { surface: true });
-vm.runInContext('surfaceRun.replay(); takeAction("save"); surfaceRun.record("save");', current.context);
-assert.equal(current.state().battery, 2);
-current = game(storage, { dashboard: true });
-assert.equal(current.state().oxygen, 2);
-current.element("save").click();
-assert.equal(current.context.location.destination, "./index.html#missions");
-assert.equal(JSON.parse(storage.get(key)).outcome, "success");
-current = page(storage, { hash: "#missions" });
-current.script("shared/surface-run.js");
-current.script("launch/menu.js");
-assert.equal(current.element("play-2d").href, "./dashboard.html?new=1");
-assert.equal(current.element("mission-result").hidden, false);
-assert.match(current.element("result-title").textContent, /Welcome home/);
-// Replay clears the previous result and restores starting resources.
-current = game(storage, { dashboard: true, search: "?new=1" });
-assert.equal(current.state().shift, 0);
-assert.equal(current.state().battery, 3);
-["report", "hold", "hold"].forEach(action => current.element(action).click());
-assert.equal(JSON.parse(storage.get(key)).outcome, "failed");
-assert.equal(current.context.location.destination, "./index.html#missions");
-current = game(storage, { surface: true, search: "?new=1" });
-assert.deepEqual(JSON.parse(storage.get(key)).actions, []);
-// Invalid and unavailable storage must not prevent starting a mission.
-storage.set(key, '{"actions":["invalid"]}');
-current = game(storage, { dashboard: true });
-assert.equal(current.state().shift, 0);
-current.context.sessionStorage.getItem = current.context.sessionStorage.setItem = () => { throw Error("blocked"); };
-vm.runInContext('surfaceRun.begin(); takeAction("report"); surfaceRun.record("report");', current.context);
-assert.equal(current.state().reports, 1);
-console.log("Passed: shared 2D/3D progress, completion, replay, failure, and unavailable storage.");
+assert.equal(classicRun(["report", "save", "save"]).result, "result win");
+assert.equal(classicRun(["report", "hold", "hold"]).result, "result lose");
+console.log("Passed: both scan orders, report gating, shared progress/pose, replay, persistent journal, invalid/blocked storage, and classic win/loss.");
