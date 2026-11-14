@@ -1,26 +1,47 @@
-// Mission 01: intentionally small, readable rules for the hackathon MVP.
+//mission 01
 const SHIFTS = ["sunlight", "shadow", "shadow"];
 const MAX_BATTERY = 9;
-const MAX_OXYGEN = 3;
+const MAX_OXYGEN = 3; //limits
 
-function newMission() {
-  return { shift: 0, battery: 3, oxygen: 3, reports: 0, finished: false };
+
+function getSolarEnergy(shiftIdx) {
+  if (SHIFTS[shiftIdx] === "sunlight") {
+    return 4;
+  } 
+  else {
+    return 0;
+  }
 }
 
-let mission = newMission();
+function getBatteryCost(action) {
+  if (action == "report") return 4;
+  else if (action == "hold") return 2;
+  else if (action == "save") return 1; //lower power usage
+}
+
+function getOxygenChange(action) {
+  if (action==="save") return -1;
+  else return 1; //cuz ur spending higher power consumption for such
+}
+
+function newMission() {
+  return {shift: 0, battery: 3, oxygen: 3, reports: 0, finished: false };
+}
+
+let mission = newMission(); 
 
 const ui = {
-  battery: document.querySelector("#battery"),
-  batteryBar: document.querySelector("#battery-bar"),
-  oxygen: document.querySelector("#oxygen"),
-  oxygenBar: document.querySelector("#oxygen-bar"),
-  shiftLabel: document.querySelector("#shift-label"),
-  timeline: document.querySelector("#timeline"),
-  forecast: document.querySelector("#forecast-note"),
-  reportStatus: document.querySelector("#report-status"),
-  log: document.querySelector("#log"),
-  result: document.querySelector("#result"),
-  restart: document.querySelector("#restart"),
+  battery: document.getElementById("battery"), //what players see
+  batteryBar: document.getElementById("battery-bar"),
+  oxygen: document.getElementById("oxygen"),
+  oxygenBar: document.getElementById("oxygen-bar"),
+  shiftLabel: document.getElementById("shift-label"),
+  timeline: document.getElementById("timeline"),
+  forecast: document.getElementById("forecast-note"),
+  reportStatus: document.getElementById("report-status"),
+  log: document.getElementById("log"),
+  result: document.getElementById("result"),
+  restart: document.getElementById("restart"),
   choices: [...document.querySelectorAll("[data-action]")]
 };
 
@@ -66,15 +87,17 @@ function finish(won, explanation) {
 function takeAction(action) {
   if (mission.finished || (action === "report" && mission.reports > 0)) return;
 
-  const weather = SHIFTS[mission.shift];
-  const solar = weather === "sunlight" ? 4 : 0;
-  const habitat = action === "save" ? 1 : 2;
-  const transmission = action === "report" ? 2 : 0;
-  const nextBattery = Math.min(MAX_BATTERY, mission.battery + solar) - habitat - transmission;
-  const nextOxygen = Math.min(MAX_OXYGEN, mission.oxygen + (action === "save" ? -1 : 1));
+  
+  const solar = getSolarEnergy(mission.shift);
+  const batteryCost = getBatteryCost(action);
+  const oxygenChange = getOxygenChange(action);
+
+
+  const nextBattery = Math.min(MAX_BATTERY, mission.battery + solar) - batteryCost;
+  const nextOxygen = Math.min(MAX_OXYGEN, mission.oxygen + oxygenChange);
 
   const labels = { report: "Sent report", hold: "Held steady", save: "Saved power" };
-  addLog(`${labels[action]}. Solar +${solar}, habitat −${habitat}, transmission −${transmission}. Battery ${Math.max(0, nextBattery)}, oxygen ${nextOxygen}.`);
+  addLog(`${labels[action]}. Solar +${solar}, batteryCost −${batteryCost}, oxygenChange −${oxygenChange}. Battery ${Math.max(0, nextBattery)}, oxygen ${nextOxygen}.`);
   mission.battery = Math.max(0, nextBattery);
   mission.oxygen = Math.max(0, nextOxygen);
   if (action === "report") mission.reports++;
