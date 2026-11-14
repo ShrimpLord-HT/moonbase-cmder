@@ -4,7 +4,7 @@ A small browser game for the **2026 NASA Space Apps Challenge / Junior Astronaut
 
 ## Play locally
 
-Open `index.html` in Firefox or Chrome. No installation, server, or npm required.
+Open `classic-mission.html` in Firefox or Chrome. No installation, server, or npm required.
 
 ## Rules
 
@@ -23,7 +23,7 @@ Open `index.html` in Firefox or Chrome. No installation, server, or npm required
 
 ## File roles
 
-- `index.html`: screen content and layout elements (good for UI teammate).
+- `classic-mission.html`: screen content and layout elements (good for UI teammate).
 - `classic/style.css`: colors, layout, responsive design (good for UI teammate).
 - `shared/game.js`: mission state, rules, decisions, outcomes (good for game-logic teammate).
 
