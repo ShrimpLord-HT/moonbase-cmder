@@ -1,0 +1,292 @@
+// game.js owns the shift rules and writes the instruments on this page.
+export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHeight, stations, solids }) {
+  const $ = id => document.getElementById(id);
+  const canvas = renderer.domElement;
+  const clamp = THREE.MathUtils.clamp;
+  const keys = new Set();
+  const start = new THREE.Vector3(0, groundHeight(0, 6), 6);
+  const suit = new THREE.Group();
+  const upperBody = new THREE.Group();
+  suit.add(upperBody);
+  const white = new THREE.MeshStandardMaterial({ color: 0xe3dfd3 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x2b3946 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd59842, metalness: 0.52, roughness: 0.28 });
+  function part(geometry, material, x, y, z, parent = upperBody) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    parent.add(mesh);
+    return mesh;
+  }
+  part(new THREE.CapsuleGeometry(0.23, 0.27), white, 0, 0.83, 0);
+  part(new THREE.BoxGeometry(0.38, 0.45, 0.19), dark, 0, 0.84, 0.22);
+  part(new THREE.SphereGeometry(0.24), white, 0, 1.32, 0);
+  part(new THREE.SphereGeometry(0.22), gold, 0, 1.32, -0.06).scale.set(0.96, 0.78, 1);
+  const legs = [], arms = [];
+  for (const side of [-1, 1]) {
+    legs.push(part(new THREE.CapsuleGeometry(0.106, 0.37), white, side * 0.13, 0.33, 0, suit));
+    arms.push(part(new THREE.CapsuleGeometry(0.085, 0.28), white, side * 0.29, 0.83, 0));
+  }
+  scene.add(suit);
+  suit.position.copy(start);
+  suit.visible = false;
+
+  let phase = "briefing", third = false, nearby = null, yaw = 0, pitch = -0.06;
+  let shiftLocked = false, gait = 0, breath = 0;
+  let descentStart = 0, stride = 0, pointer = null, lastX = 0, lastY = 0;
+  const eye = new THREE.Vector3(), direction = new THREE.Vector3(), target = new THREE.Vector3();
+  const boom = new THREE.Vector3(), hit = new THREE.Vector3(), ray = new THREE.Ray();
+  const cameraSolids = solids.map(box => box.clone().expandByScalar(0.14));
+  const introPosition = new THREE.Vector3(11, 8, 13);
+  const introTarget = new THREE.Vector3(-3, 0.8, 3.6);
+  const introFocus = new THREE.Vector3();
+  const landingEye = start.clone().add(new THREE.Vector3(0, 1.32, 0));
+  const landingTarget = landingEye.clone().add(new THREE.Vector3(0, Math.tan(pitch), -1));
+  let pendingFrame = 0, previous = 0;
+  function requestFrame() {
+    if (!pendingFrame && !document.hidden) {
+      if (!previous) previous = performance.now();
+      pendingFrame = requestAnimationFrame(draw);
+    }
+  }
+  function setPhase(value) {
+    phase = document.body.dataset.phase = value;
+    keys.clear();
+    pointer = null;
+    if (value !== "walk" && document.pointerLockElement) document.exitPointerLock();
+    requestFrame();
+  }
+  function frameBriefing() {
+    camera.position.copy(introPosition);
+    camera.lookAt(introTarget);
+  }
+  function aimCamera() {
+    direction.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
+    eye.copy(suit.position); eye.y += 1.32;
+    camera.position.copy(eye);
+    suit.visible = third;
+    if (third) {
+      boom.copy(direction).multiplyScalar(-2.9);
+      boom.y += 0.72;
+      if (shiftLocked) {
+        boom.x += 0.55 * Math.cos(yaw);
+        boom.z -= 0.55 * Math.sin(yaw);
+      }
+      let distance = boom.length();
+      ray.set(eye, boom.normalize());
+      for (const box of cameraSolids) {
+        if (ray.intersectBox(box, hit)) distance = Math.min(distance, Math.max(0, eye.distanceTo(hit) - 0.06));
+      }
+      // Clip the boom before it crosses a crater rim or the ground.
+      for (let step = 0.1; step <= distance; step += 0.1) {
+        ray.at(step, hit);
+        if (hit.y < groundHeight(hit.x, hit.z) + 0.15) { distance = step - 0.1; break; }
+      }
+      camera.position.addScaledVector(boom, distance);
+      suit.visible = distance > 0.48;
+    }
+    if (third && shiftLocked) camera.lookAt(target.copy(camera.position).add(direction));
+    else camera.lookAt(target.copy(eye).addScaledVector(direction, third ? 2.4 : 1));
+  }
+  function land() {
+    setPhase("walk");
+    suit.position.copy(start); suit.rotation.y = yaw = 0; pitch = -0.06;
+    $("briefing").hidden = $("skip").hidden = true;
+    $("live").hidden = false;
+    $("objective").textContent = "Walk to the blue Communications terminal and send a report.";
+    aimCamera();
+    checkStation();
+  }
+  $("deploy").onclick = () => {
+    setPhase("descent");
+    descentStart = performance.now();
+    $("briefing").hidden = true; $("skip").hidden = false;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) land();
+    else $("skip").focus();
+  };
+  $("skip").onclick = land;
+  function changeView() {
+    if (phase !== "walk") return;
+    third = !third;
+    renderer.shadowMap.autoUpdate = third;
+    renderer.shadowMap.needsUpdate = true;
+    setShiftLock(false);
+    $("shift-lock").hidden = !third;
+    $("view").textContent = (third ? "Third" : "First") + " person · V";
+    aimCamera();
+    requestFrame();
+  }
+  $("view").onclick = changeView;
+
+  function setShiftLock(on) {
+    shiftLocked = on;
+    $("shift-lock").setAttribute("aria-pressed", String(on));
+    $("shift-lock").textContent = "Shift lock " + (on ? "on" : "off");
+  }
+  function toggleLock(useMouse) {
+    if (!third || phase !== "walk") return;
+    setShiftLock(!shiftLocked);
+    if (shiftLocked && useMouse && !document.pointerLockElement) {
+      canvas.requestPointerLock?.()?.catch?.(() => {});
+    } else if (!shiftLocked && document.pointerLockElement === canvas) {
+      document.exitPointerLock();
+    }
+  }
+  $("shift-lock").onclick = e => toggleLock(e.pointerType === "mouse");
+  document.addEventListener("pointerlockchange", () => {
+    if (!document.pointerLockElement && phase === "walk") setShiftLock(false);
+  });
+
+  function canStand(x, z) {
+    return Math.abs(x) <= 16 && Math.abs(z) <= 16 && !solids.some(box =>
+      x > box.min.x - 0.23 && x < box.max.x + 0.23 && z > box.min.z - 0.23 && z < box.max.z + 0.23);
+  }
+  function walk(dt) {
+    let forward = Number(keys.has("KeyW")) - Number(keys.has("KeyS"));
+    let side = Number(keys.has("KeyD")) - Number(keys.has("KeyA"));
+    const step = 2.8 * dt / (Math.hypot(forward, side) || 1);
+    const dx = (side * Math.cos(yaw) - forward * Math.sin(yaw)) * step;
+    const dz = (-forward * Math.cos(yaw) - side * Math.sin(yaw)) * step;
+    const p = suit.position;
+    const oldX = p.x, oldZ = p.z;
+    if (canStand(p.x + dx, p.z)) p.x += dx;
+    if (canStand(p.x, p.z + dz)) p.z += dz;
+    p.y = groundHeight(p.x, p.z);
+    const distance = Math.hypot(p.x - oldX, p.z - oldZ);
+    if (third && shiftLocked) suit.rotation.y = yaw;
+    else if (distance > 0) suit.rotation.y = Math.atan2(oldX - p.x, oldZ - p.z);
+
+    // Animate the suit from distance travelled so it settles against obstacles.
+    stride += distance * 3;
+    breath += dt * 2.2;
+    gait = THREE.MathUtils.damp(gait, distance > 0 ? 1 : 0, 12, dt);
+    const swing = 0.38 * Math.sin(stride) * gait;
+    upperBody.position.y = 0.014 * Math.sin(breath) * (1 - gait) + 0.045 * Math.sin(stride) ** 2 * gait;
+    upperBody.rotation.z = 0.028 * Math.cos(stride) * gait;
+    legs[0].rotation.x = arms[1].rotation.x = swing;
+    legs[1].rotation.x = arms[0].rotation.x = -swing;
+    aimCamera();
+    checkStation();
+  }
+  function checkStation() {
+    const next = stations.find(s => Math.hypot(s.x - suit.position.x, s.z - suit.position.z) <= 1.8);
+    if (next === nearby) return;
+    nearby = next;
+    $("use").hidden = !nearby;
+    if (nearby) $("use").textContent = "Use " + nearby.name + " · E";
+  }
+  const consoleBox = $("console");
+  function use() {
+    if (!nearby || phase !== "walk") return;
+    setPhase("station");
+    $("station-title").textContent = nearby.name;
+    for (const b of consoleBox.querySelectorAll("[data-action]")) {
+      b.hidden = (b.dataset.action === "report") !== (nearby === stations[0]);
+    }
+    $("station-guide").textContent = nearby === stations[0]
+      ? "Transmit one report before the end of shift 3. The listed cost includes habitat power."
+      : "Keep battery and oxygen above zero. Holding steady restores one oxygen, up to three.";
+    consoleBox.showModal();
+  }
+  $("use").onclick = use;
+  $("close").onclick = () => consoleBox.close();
+  consoleBox.addEventListener("close", () => { if (phase === "station") setPhase("walk"); });
+  // The action button's existing game.js listener runs before this bubbled click.
+  consoleBox.addEventListener("click", event => {
+    if (!event.target.closest("[data-action]") || phase !== "station") return;
+    consoleBox.close();
+    const finished = !$("result").hidden;
+    setPhase(finished ? "finished" : "walk");
+    if (event.target.closest("[data-action]").dataset.action === "report") {
+      $("objective").textContent = "Report sent. Use the amber Habitat console to survive the remaining shifts.";
+    }
+    sunlight.intensity = 0.22;
+    sunlight.color.setHex(0xa2b5dd);
+    for (const s of stations) s.lamp.intensity = 10;
+    if (finished) $("ending").showModal();
+  });
+  $("ending").addEventListener("cancel", e => e.preventDefault());
+  $("restart").addEventListener("click", () => {
+    $("ending").close();
+    sunlight.intensity = 3.2; sunlight.color.setHex(0xffedcf);
+    for (const s of stations) s.lamp.intensity = 2;
+    land();
+  });
+
+  addEventListener("keydown", e => {
+    if (phase !== "walk" || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (["KeyW","KeyA","KeyS","KeyD"].includes(e.code)) { keys.add(e.code); requestFrame(); }
+    if (!e.repeat && e.code === "KeyV") changeView();
+    if (!e.repeat && (e.code === "ShiftLeft" || e.code === "ShiftRight")) toggleLock(true);
+    if (!e.repeat && e.code === "KeyE") use();
+  });
+  addEventListener("keyup", e => keys.delete(e.code));
+  addEventListener("blur", () => { keys.clear(); pointer = null; });
+  for (const button of $("pad").querySelectorAll("button")) {
+    button.onpointerdown = e => {
+      if (phase !== "walk") return;
+      e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.key); requestFrame();
+    };
+    button.onlostpointercapture = () => keys.delete(button.dataset.key);
+  }
+  function look(dx, dy) {
+    yaw -= dx * 0.003;
+    pitch = clamp(pitch - dy * 0.003, -1.1, 1.05);
+    requestFrame();
+  }
+  canvas.onpointerdown = e => {
+    if (phase !== "walk" || e.button !== 0) return;
+    pointer = e.pointerId; lastX = e.clientX; lastY = e.clientY;
+    canvas.setPointerCapture(pointer);
+    if (e.pointerType === "mouse" && !document.pointerLockElement) {
+      // Drag-to-look also works on browsers that decline pointer lock.
+      canvas.requestPointerLock?.()?.catch?.(() => {});
+    }
+  };
+  canvas.onpointermove = e => {
+    if (phase !== "walk" || document.pointerLockElement || pointer !== e.pointerId) return;
+    look(e.clientX - lastX, e.clientY - lastY); lastX = e.clientX; lastY = e.clientY;
+  };
+  canvas.onlostpointercapture = () => { pointer = null; };
+  document.addEventListener("mousemove", e => {
+    if (phase === "walk" && document.pointerLockElement === canvas) look(e.movementX, e.movementY);
+  });
+
+  function resize() {
+    camera.aspect = innerWidth / innerHeight;
+    camera.fov = phase === "briefing" && camera.aspect < 1 ? 68 : 59;
+    camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+    requestFrame();
+  }
+  addEventListener("resize", resize);
+  resize(); frameBriefing();
+  $("loading").hidden = true; $("deploy").disabled = false;
+  // Only the visible astronaut casts a moving shadow.
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      cancelAnimationFrame(pendingFrame);
+      pendingFrame = previous = 0;
+      keys.clear();
+      pointer = null;
+    } else requestFrame();
+  });
+  function draw(now) {
+    pendingFrame = 0;
+    const dt = Math.min(0.05, Math.max(0, (now - previous) / 1000)); previous = now;
+    if (phase === "descent") {
+      const t = clamp((now - descentStart) / 3000, 0, 1);
+      const eased = t * t * (3 - 2 * t);
+      camera.position.lerpVectors(introPosition, landingEye, eased);
+      camera.lookAt(introFocus.lerpVectors(introTarget, landingTarget, eased));
+      if (t === 1) land();
+    } else if (phase === "walk") walk(dt);
+    renderer.render(scene, camera);
+    if (phase === "descent" || (phase === "walk" && (third || keys.size))) requestFrame();
+    else previous = 0;
+  }
+}
+
+
+

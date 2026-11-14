@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1015">
+  <link rel="icon" href="data:,">
+  <title>Moonbase Commander · Surface mission</title>
+  <link rel="stylesheet" href="surface/surface.css">
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js"}}</script>
+  <script src="shared/game.js" defer></script>
+  <script type="module" src="surface/scene3d.js"></script>
+</head>
+<body data-phase="briefing">
+  <main id="scene" aria-label="Interactive lunar outpost"></main>
+  <header><span class="brand"><i></i> Moonbase <strong>Commander</strong></span><a href="./index.html">Classic mission ↗</a></header>
+  <section id="briefing">
+    <small class="eyebrow">Tutorial <span>/</span> Lunar outpost</small>
+    <h1>Keep the lights on.<br>Bring the science <em>home.</em></h1>
+    <p>Walk to communications to send a report. Use the habitat console to manage power and survive three shifts.</p>
+    <div id="timeline" aria-label="Shift forecast"></div>
+    <button id="deploy" class="primary" disabled>Deploy to surface <b>↘</b></button>
+    <p id="loading" role="status">Loading surface…</p>
+  </section>
+  <button id="skip" hidden>Skip descent ↓</button>
+  <section id="live" hidden aria-label="Mission instruments">
+    <div id="telemetry"><strong id="shift-label"></strong><span>Battery <b id="battery"></b>/9<i><u id="battery-bar"></u></i></span><span>Oxygen <b id="oxygen"></b>/3<i><u id="oxygen-bar"></u></i></span><span id="report-status"></span></div>
+    <div class="objective" id="objective">Walk to the blue Communications terminal and send a report.</div>
+    <div class="camera-tools">
+      <button id="view" title="Switch camera (V)">First person · V</button>
+      <button id="shift-lock" aria-pressed="false" hidden>Shift lock</button>
+    </div>
+    <div id="reticle" aria-hidden="true"></div>
+    <div class="bottom"><div id="forecast-note"></div><div id="log" aria-live="polite"></div></div>
+    <p id="help"><span class="desktop">WASD move · Click or drag to look · E use · V view</span><span class="mobile">Move with arrows · Drag to look</span></p>
+    <button id="use" hidden></button>
+    <div id="pad" aria-label="Movement"><button data-key="KeyW" aria-label="Forward">↑</button><button data-key="KeyA" aria-label="Left">←</button><button data-key="KeyS" aria-label="Backward">↓</button><button data-key="KeyD" aria-label="Right">→</button></div>
+  </section>
+  <dialog id="console"><small class="eyebrow">Outpost operations</small><h2 id="station-title"></h2>
+    <p id="station-guide"></p><button data-action="report">Send report <span>4 energy total</span></button>
+    <button data-action="hold">Hold steady <span>2 energy</span></button>
+    <button data-action="save">Save power <span>1 energy · −1 oxygen</span></button>
+    <button id="close">Back to surface</button>
+  </dialog>
+  <dialog id="ending"><div id="result" role="status" hidden></div><button id="restart" class="primary">Restart mission ↻</button></dialog>
+</body>
+</html>
+
+
