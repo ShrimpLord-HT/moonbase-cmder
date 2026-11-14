@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="generator" content="ChatGPT/Codex — AI-assisted development">
+  <meta name="ai-assistance" content="AI-assisted mission brainstorming, code, procedural visuals, dialogue, educational text, simulated readings, and tests. See credits.html and provenance.json.">
+  <link rel="describedby" href="credits.html" type="text/html"><link rel="describedby" href="provenance.json" type="application/json">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#091321">
+  <title>Moonbase Commander | Expedition dashboard</title><link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="classic/style.css"><link rel="stylesheet" href="shared/expedition.css">
+  <script src="shared/mission1.js" defer></script><script src="shared/surface-run.js" defer></script><script src="shared/expedition-ui.js" defer></script>
+</head>
+<body data-expedition="2d">
+  <div class="stars" aria-hidden="true"></div>
+  <main class="app field-dashboard">
+    <header class="topbar"><div class="brand"><span class="brand-icon">◈</span> MOONBASE <strong>COMMANDER</strong></div><nav class="summary-nav"><a class="summary-link" href="./index.html#missions">← Missions</a><a class="summary-link" href="./3d-test.html#resume">Continue in 3D ↗</a></nav></header>
+    <section class="intro" aria-labelledby="mission-title"><div><p class="eyebrow">MISSION 01 / LUNAR OUTPOST</p><h1 id="mission-title">A clue in the <em>cold.</em></h1><p class="intro-text">Two samples. One curious signal. Explore with Pip and send your first lunar finding home.</p></div><span class="pip-avatar hero-pip" aria-hidden="true"><i></i><i></i></span></section>
+    <section class="panel expedition-overview" aria-label="Expedition progress"><div data-expedition-progress></div><div class="objective-row"><p id="objective" aria-live="polite"></p><span id="observation-count">0 / 2 observations</span></div><div class="field-tools"><button type="button" data-hint>Ask Pip · Hint</button><button type="button" data-open-journal>Field journal</button><span>Outpost systems steady · Explore at your own pace</span></div></section>
+    <section class="panel map-panel" aria-labelledby="map-title"><div class="panel-heading"><span id="map-title">YOUR EXPEDITION MAP</span><span>2D VIEW</span></div><p class="helper">Choose a location to explore. You can start with either scan.</p>
+      <div class="field-map" aria-label="Interactive training outpost map">
+        <svg class="map-paths" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M 24 72 L 59 72 L 78 40 M 24 72 L 33 22 M 59 72 L 78 40"/></svg>
+        <button class="map-stop map-shadow" data-inspect="shadow" type="button"><span>☾</span><b>Shaded crater</b><small>Scan a curious signal</small></button>
+        <button class="map-stop map-sunlit" data-inspect="sunlit" type="button"><span>☀</span><b>Sunlit reference</b><small>Compare a second sample</small></button>
+        <button class="map-stop map-uplink" data-inspect="communications" type="button"><span>↗</span><b>Communications</b><small>Send your finding home</small></button>
+        <button class="map-stop map-pip" data-inspect="pip" type="button"><span class="pip-avatar mini" aria-hidden="true"><i></i><i></i></span><b>Meet Pip</b><small>Your exploration buddy</small></button>
+      </div><p class="training-note">Illustrative map of an imagined lunar outpost · training scanner readings are simulated</p>
+    </section>
+    <section class="observations-grid" aria-label="Your observations">
+      <article class="panel observation-card" data-observation="shadow"><p class="eyebrow">01 / SHADED CRATER</p><h2>What hides in the cold?</h2><p data-reading>Ready for your first scan</p><small data-recorded>Not yet explored</small><button data-inspect="shadow" type="button">Explore shaded site ↗</button></article>
+      <article class="panel observation-card" data-observation="sunlit"><p class="eyebrow">02 / SUNLIT REFERENCE</p><h2>Something to compare.</h2><p data-reading>Ready for your first scan</p><small data-recorded>Not yet explored</small><button data-inspect="sunlit" type="button">Explore sunlit site ↗</button></article>
+    </section>
+    <section class="panel report-panel"><div><p class="eyebrow">03 / A MESSAGE FOR EARTH</p><h2>Your finding matters.</h2><p>Collect both observations, then share what you think they mean.</p></div><button class="report-button" data-inspect="communications" type="button">Open Communications ↗</button></section>
+    <footer>Educational training expedition · <a href="./credits.html">AI-assisted · Credits</a> · <a href="./classic-mission.html">Classic survival challenge</a></footer>
+  </main>
+</body>
+</html>

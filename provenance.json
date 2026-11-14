@@ -1,0 +1,47 @@
+{
+  "format_version": 1,
+  "project": "Moonbase Commander",
+  "updated": "2026-11-14",
+  "disclosure_page": "credits.html",
+  "ai_assistance": {
+    "tools": ["ChatGPT", "Codex"],
+    "extent": "Substantial code and content were generated or revised with AI assistance; existing team work is also present.",
+    "activities": [
+      "Mission brainstorming and refinement",
+      "HTML, CSS, and JavaScript generation and revision",
+      "Procedural 3D geometry, animations, and interface visuals through code",
+      "Pip dialogue, mission briefings, and educational text",
+      "Fictional training scanner readings and report wording",
+      "Documentation and automated test development"
+    ],
+    "code_and_content_paths": ["index.html", "dashboard.html", "3d-test.html", "classic-mission.html", "launch/", "surface/", "shared/", "tests/", "docs/", "README.md", "credits.html"],
+    "human_direction": "The team supplied the goal of inspiring children through space exploration and selected the audience, safe expedition, robot companion, and journal reward.",
+    "review_status": "Development included source checks, automated checks, and browser checks. This record does not assert independent human scientific review or organizer approval.",
+    "runtime": "Pip is scripted; the game does not call a live AI model.",
+    "raster_media": "The six NASA-source JPEGs below were downloaded from their publishers. No image-generation model was used to create those bundled files during this development work. The pre-existing favicon has unverified authorship.",
+    "audio": "No audio assets or generated speech are currently included."
+  },
+  "simulated_data": {
+    "paths": ["shared/mission1.js", "shared/game.js"],
+    "provenance": "AI-assisted authored training values and simplified game rules, not live NASA measurements.",
+    "readings": ["Ice-like light pattern detected", "Rock-like light pattern detected"],
+    "geography": "Authored fictional outpost, not a surveyed NASA landing site."
+  },
+  "assets": [
+    {"path":"launch/assets/moon-color.jpg","origin":"NASA-source map","credit":"NASA/GSFC/Arizona State University","source_page":"https://svs.gsfc.nasa.gov/4720/","source_file":"https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg","modifications":["Mapped onto a globe with presentation lighting and accelerated rotation"],"ai_image_generation_in_this_work":false},
+    {"path":"launch/assets/moon-height.jpg","origin":"NASA-source elevation map","credit":"NASA/GSFC/MIT","source_page":"https://svs.gsfc.nasa.gov/4720/","source_file":"https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_3_8bit.jpg","modifications":["Used for visually exaggerated terrain shading"],"ai_image_generation_in_this_work":false},
+    {"path":"launch/assets/earth-blue-marble.jpg","origin":"NASA-source composite imagery","credit":"NASA's Earth Observatory; MODIS/Terra","source_page":"https://science.nasa.gov/resource/blue-marble-2002/","source_file":"https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/1/1-bluemarble_west.jpg","modifications":["Displayed as a distant, illustratively framed Earth"],"ai_image_generation_in_this_work":false},
+    {"path":"launch/assets/mission-outpost.jpg","origin":"Published NASA concept illustration","credit":"NASA","source_page":"https://www.nasa.gov/blogs/missions/2020/10/28/lunar-living-nasas-artemis-base-camp-concept/","source_file":"https://www.nasa.gov/wp-content/uploads/2020/10/surface-1024x576-1.jpg","modifications":["Cropped by CSS for the mission card"],"ai_image_generation_in_this_work":false},
+    {"path":"launch/assets/mission-crater.jpg","origin":"LROC/ShadowCam image mosaic","credit":"LROC and ShadowCam teams; NASA/KARI/ASU","source_page":"https://www.nasa.gov/missions/lro/nasa-moon-camera-mosaic-sheds-light-on-lunar-south-pole/","source_file":"https://www.nasa.gov/wp-content/uploads/2023/09/shadowcam_shackleton_crater_mosaic_072823.jpeg?w=985","modifications":["Web-size JPEG copy re-encoded for delivery","Cropped by CSS for the mission card","Used as a labelled reference image in the journal"],"ai_image_generation_in_this_work":false},
+    {"path":"launch/assets/mission-orbiter.jpg","origin":"Published NASA spacecraft illustration","credit":"NASA/GSFC","source_page":"https://astrobiology.nasa.gov/missions/lro/","source_file":"https://astrobiology.nasa.gov/uploads/filer_public_thumbnails/filer_public/38/50/38502496-e6f7-41f0-8698-e7c7745f582a/pia18163_hires_hero.jpg__1240x510_q85_crop_subject_location-620%2C289_subsampling-2.jpg","modifications":["Publisher-provided web thumbnail","Cropped by CSS for the mission card"],"ai_image_generation_in_this_work":false},
+    {"path":"favicon.ico","origin":"Pre-existing repository asset","credit":"Creator not established in the current record","generation_history":"Unverified; team confirmation pending"}
+  ],
+  "science_sources": ["https://science.nasa.gov/moon/moon-water-and-ices/", "https://www.jpl.nasa.gov/news/ice-confirmed-at-the-moons-poles/"],
+  "third_party_software": [{"name":"Three.js","version":"0.187.0","credit":"Copyright 2010-2026 three.js authors","license":"MIT","license_url":"https://github.com/mrdoob/three.js/blob/r187/LICENSE","delivery":"Loaded from jsDelivr CDN"}],
+  "future_generated_media": "Record tool and generation method; add a visible AI/SI-generation watermark for generated images and videos and descriptive text/metadata for generated audio. Keep NASA branding out of generated artwork. Clarify organizer treatment of code-rendered captures before submission.",
+  "submission_review": "Actual AI use includes mission brainstorming. Confirm interpretation of the idea-origin clause with organizers; this provenance record is not a compliance certification.",
+  "media_usage_guidance": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+  "space_apps_guidance": "https://github.com/nasa/spaceapps/discussions/1849",
+  "license_scope": "Project-code MIT licensing does not relicense third-party media or software.",
+  "endorsement": "NASA has not reviewed or endorsed this game or its AI-assisted content."
+}

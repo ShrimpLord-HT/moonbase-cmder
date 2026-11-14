@@ -1,9 +1,10 @@
-// game.js owns the shift rules and writes the instruments on this page.
-export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHeight, stations, solids }) {
+// The shared expedition controller owns discoveries, radio, and reports.
+export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stations, solids, marker, pipHead }) {
   const $ = id => document.getElementById(id);
   const canvas = renderer.domElement;
   const clamp = THREE.MathUtils.clamp;
   const keys = new Set();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const start = new THREE.Vector3(0, groundHeight(0, 6), 6);
   const suit = new THREE.Group();
   const upperBody = new THREE.Group();
@@ -93,15 +94,17 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
     suit.position.copy(start); suit.rotation.y = yaw = 0; pitch = -0.06;
     $("briefing").hidden = $("skip").hidden = true;
     $("live").hidden = false;
-    $("objective").textContent = "Walk to the blue Communications terminal and send a report.";
+    updateNavigation();
     aimCamera();
     checkStation();
+    ExpeditionUI.welcome();
   }
   $("deploy").onclick = () => {
+    history.replaceState(null, "", location.pathname + "#resume");
     setPhase("descent");
     descentStart = performance.now();
     $("briefing").hidden = true; $("skip").hidden = false;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) land();
+    if (reducedMotion.matches) land();
     else $("skip").focus();
   };
   $("skip").onclick = land;
@@ -161,57 +164,50 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
     breath += dt * 2.2;
     gait = THREE.MathUtils.damp(gait, distance > 0 ? 1 : 0, 12, dt);
     const swing = 0.38 * Math.sin(stride) * gait;
-    upperBody.position.y = 0.014 * Math.sin(breath) * (1 - gait) + 0.045 * Math.sin(stride) ** 2 * gait;
-    upperBody.rotation.z = 0.028 * Math.cos(stride) * gait;
+    upperBody.position.y = reducedMotion.matches ? 0 : 0.014 * Math.sin(breath) * (1 - gait) + 0.045 * Math.sin(stride) ** 2 * gait;
+    upperBody.rotation.z = reducedMotion.matches ? 0 : 0.028 * Math.cos(stride) * gait;
     legs[0].rotation.x = arms[1].rotation.x = swing;
     legs[1].rotation.x = arms[0].rotation.x = -swing;
     aimCamera();
     checkStation();
+    updateNavigation();
+  }
+  function updateNavigation() {
+    const next = Mission1.next(ExpeditionUI.state);
+    marker.visible = !ExpeditionUI.state.reported;
+    marker.position.set(next.x, groundHeight(next.x, next.z), next.z);
+    const dx = next.x - suit.position.x, dz = next.z - suit.position.z;
+    $("waypoint-name").textContent = `${next.name} · ${Math.round(Math.hypot(dx, dz))} m`;
+    $("waypoint-arrow").style.transform = `rotate(${Math.atan2(dx, -dz) + yaw}rad)`;
+    pipHead.rotation.y = Math.atan2(suit.position.x - 1.6, suit.position.z - 6);
   }
   function checkStation() {
-    const next = stations.find(s => Math.hypot(s.x - suit.position.x, s.z - suit.position.z) <= 1.8);
+    const next = stations.filter(station => Math.hypot(station.x - suit.position.x, station.z - suit.position.z) <= 1.8)
+      .sort((a, b) => Math.hypot(a.x - suit.position.x, a.z - suit.position.z) - Math.hypot(b.x - suit.position.x, b.z - suit.position.z))[0];
     if (next === nearby) return;
     nearby = next;
     $("use").hidden = !nearby;
-    if (nearby) $("use").textContent = "Use " + nearby.name + " · E";
+    if (nearby) $("use").textContent = (Mission1.sites[nearby.id] ? "Scan " : nearby.id === "pip" ? "Talk to " : "Explore ") + nearby.name + " · E";
   }
-  const consoleBox = $("console");
   function use() {
-    if (!nearby || phase !== "walk") return;
-    setPhase("station");
-    $("station-title").textContent = nearby.name;
-    for (const b of consoleBox.querySelectorAll("[data-action]")) {
-      b.hidden = (b.dataset.action === "report") !== (nearby === stations[0]);
-    }
-    $("station-guide").textContent = nearby === stations[0]
-      ? "Transmit one report before the end of shift 3. The listed cost includes habitat power."
-      : "Keep battery and oxygen above zero. Holding steady restores one oxygen, up to three.";
-    consoleBox.showModal();
+    if (nearby && phase === "walk") ExpeditionUI.inspect(nearby.id);
   }
   $("use").onclick = use;
-  $("close").onclick = () => consoleBox.close();
-  consoleBox.addEventListener("close", () => { if (phase === "station") setPhase("walk"); });
-  // The action button's existing game.js listener runs before this bubbled click.
-  consoleBox.addEventListener("click", event => {
-    if (!event.target.closest("[data-action]") || phase !== "station") return;
-    consoleBox.close();
-    const finished = !$("result").hidden;
-    setPhase(finished ? "finished" : "walk");
-    if (event.target.closest("[data-action]").dataset.action === "report") {
-      $("objective").textContent = "Report sent. Use the amber Habitat console to survive the remaining shifts.";
-    }
-    sunlight.intensity = 0.22;
-    sunlight.color.setHex(0xa2b5dd);
-    for (const s of stations) s.lamp.intensity = 10;
-    if (finished) $("ending").showModal();
+  document.addEventListener("expeditiondialog", event => {
+    if (event.detail.open && phase === "walk") setPhase("station");
+    else if (!event.detail.open && phase === "station") setPhase("walk");
   });
-  $("ending").addEventListener("cancel", e => e.preventDefault());
-  $("restart").addEventListener("click", () => {
-    $("ending").close();
-    sunlight.intensity = 3.2; sunlight.color.setHex(0xffedcf);
-    for (const s of stations) s.lamp.intensity = 2;
-    land();
-  });
+  document.addEventListener("expeditionchange", () => { updateNavigation(); requestFrame(); });
+  $("return-pip").onclick = () => {
+    suit.position.copy(start); suit.rotation.y = yaw = 0; pitch = -0.06;
+    setPhase("walk"); aimCamera(); checkStation(); updateNavigation();
+    surfaceRun.checkpoint({ x: suit.position.x, z: suit.position.z, yaw, pitch, third, shiftLocked });
+    requestFrame();
+  };
+  $("toggle-pad").onclick = () => {
+    const visible = document.body.classList.toggle("show-movement-pad");
+    $("toggle-pad").setAttribute("aria-pressed", String(visible));
+  };
 
   addEventListener("keydown", e => {
     if (phase !== "walk" || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -223,11 +219,22 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
   addEventListener("keyup", e => keys.delete(e.code));
   addEventListener("blur", () => { keys.clear(); pointer = null; });
   for (const button of $("pad").querySelectorAll("button")) {
+    let pressedAt = 0;
     button.onpointerdown = e => {
       if (phase !== "walk") return;
+      pressedAt = performance.now();
       e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.key); requestFrame();
     };
     button.onlostpointercapture = () => keys.delete(button.dataset.key);
+    // Short taps and keyboard activation also take a step, even between animation frames.
+    button.onclick = event => {
+      if (phase !== "walk" || (event.detail && performance.now() - pressedAt > 200)) return;
+      const held = keys.has(button.dataset.key);
+      keys.add(button.dataset.key);
+      walk(0.12);
+      if (!held) keys.delete(button.dataset.key);
+      requestFrame();
+    };
   }
   function look(dx, dy) {
     yaw -= dx * 0.003;
@@ -259,11 +266,34 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
     requestFrame();
   }
   addEventListener("resize", resize);
-  resize(); frameBriefing();
+  addEventListener("surfaceassetready", requestFrame);
+  reducedMotion.addEventListener("change", requestFrame);
+  resize(); frameBriefing(); updateNavigation();
   $("loading").hidden = true; $("deploy").disabled = false;
   // Only the visible astronaut casts a moving shadow.
   renderer.shadowMap.autoUpdate = false;
   renderer.shadowMap.needsUpdate = true;
+  addEventListener("pagehide", () => {
+    if (phase === "walk" || phase === "station") {
+      surfaceRun.checkpoint({ x: suit.position.x, z: suit.position.z, yaw, pitch, third, shiftLocked });
+    }
+  });
+  if (location.hash === "#resume") {
+    const saved = surfaceRun.load();
+    if (saved) {
+      land();
+      const pose = saved.pose;
+      if (pose && Number.isFinite(pose.x) && Number.isFinite(pose.z) && canStand(pose.x, pose.z) && Number.isFinite(pose.yaw) && Number.isFinite(pose.pitch)) {
+        suit.position.set(pose.x, groundHeight(pose.x, pose.z), pose.z);
+        yaw = pose.yaw; pitch = clamp(pose.pitch, -1.1, 1.05);
+        if (pose.third) changeView();
+        setShiftLock(third && pose.shiftLocked);
+        aimCamera(); checkStation();
+      }
+      updateNavigation();
+
+    }
+  }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       cancelAnimationFrame(pendingFrame);
@@ -283,7 +313,7 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
       if (t === 1) land();
     } else if (phase === "walk") walk(dt);
     renderer.render(scene, camera);
-    if (phase === "descent" || (phase === "walk" && (third || keys.size))) requestFrame();
+    if (phase === "descent" || (phase === "walk" && ((third && !reducedMotion.matches) || keys.size))) requestFrame();
     else previous = 0;
   }
 }

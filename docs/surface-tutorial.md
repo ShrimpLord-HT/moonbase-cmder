@@ -7,13 +7,19 @@ cd "$env:USERPROFILE\moonbase-cmder"
 python -m http.server 8127 --bind 127.0.0.1
 ```
 
-Open [the surface tutorial](http://127.0.0.1:8127/3d-test.html) or [the classic mission](http://127.0.0.1:8127/index.html). Stop the server with Ctrl+C. The 3D tutorial requires WebGL 2 and internet access to load Three.js 0.187.0. No build step or npm install is needed.
+Open [the intro and mission menu](http://127.0.0.1:8127/). Choose Mission 1 in 3D or open its 2D dashboard. The header lets you switch views without losing progress in this tab. A finished expedition returns to selection with its journal and replay options. Stop the server with Ctrl+C. The 3D page requires WebGL 2 and internet access to load Three.js 0.187.0. No build step or npm install is needed.
 
-Choose **Deploy to surface**. Walk with **WASD**, click the scene for mouse look (Esc releases it), or drag to look. Press **V** to switch between helmet and third-person views. On touchscreens, use the arrow pad, drag the scene to look, and tap the view button.
+Choose **Begin expedition**. Walk with **WASD**, click the scene for mouse look (Esc releases it), or drag to look. Press **V** to switch between helmet and third-person views. On touchscreens, use the arrow pad, drag the scene to look, and tap the view button.
+
+The **Movement pad** button also shows the arrow controls on desktop. Hold an arrow to move continuously, or tap it for a small step. These buttons also work with keyboard activation.
 
 In third person, press **Shift** or tap **Shift lock** for an over-the-shoulder view. The astronaut faces your aim while **A/D** strafe and **S** backs up. Toggle it again for free orbit.
 
-Approach the blue **Communications** terminal to send your science report. Use **E** or the on-screen **Use** button. The amber **Habitat** console handles power and life support. Only confirming a command spends a shift. Survive all three with at least one report to finish the tutorial.
+Pip is the small rover at the landing point. The **Shaded crater** scanner is at `(8, 3)` and the **Sunlit reference** at `(5, 6)`. Walk close and press **E** or tap the on-screen interaction button. Either scan can come first. Findings appear in your journal and repeated scans reopen the same observation.
 
-The 3D page uses the same `shared/game.js` actions, instruments, flight log, and outcomes as the classic mission. The scene and movement code live in `surface/scene3d.js` and `surface/tutorial.js`.
+After both scans, use **Communications** at `(0, -4)` to preview and send the report. Mission 1 has no resource costs, countdown, or failure state. **Ask Pip · Hint** identifies the next destination and the amber marker points toward it. **Return to Pip** resets position and aim without clearing findings. **Field journal** reopens your observations at any time.
+
+The 2D dashboard uses the same controller, scan results, dialogue, and report gate. The standalone classic page retains the original survival rules.
+
+Completed journals are saved in local storage; active expeditions and 3D pose use session storage. When all storage is unavailable, the completed journal stays on the current page so it can still be read.
 

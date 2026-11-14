@@ -97,7 +97,7 @@ function takeAction(action) {
   const nextOxygen = Math.min(MAX_OXYGEN, mission.oxygen + oxygenChange);
 
   const labels = { report: "Sent report", hold: "Held steady", save: "Saved power" };
-  addLog(`${labels[action]}. Solar +${solar}, batteryCost −${batteryCost}, oxygenChange −${oxygenChange}. Battery ${Math.max(0, nextBattery)}, oxygen ${nextOxygen}.`);
+  addLog(`${labels[action]}. Solar +${solar}, energy −${batteryCost}, oxygen ${oxygenChange > 0 ? "+" : ""}${oxygenChange}. Battery ${Math.max(0, nextBattery)}, oxygen ${nextOxygen}.`);
   mission.battery = Math.max(0, nextBattery);
   mission.oxygen = Math.max(0, nextOxygen);
   if (action === "report") mission.reports++;
@@ -117,7 +117,7 @@ function takeAction(action) {
 }
 
 ui.choices.forEach(button => button.addEventListener("click", () => takeAction(button.dataset.action)));
-ui.restart.addEventListener("click", () => {
+ui.restart?.addEventListener("click", () => {
   mission = newMission();
   ui.log.innerHTML = '<p class="log-entry"><span class="log-time">00:00</span> Systems reset. Ready for your first command.</p>';
   ui.result.hidden = true;

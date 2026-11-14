@@ -1,3 +1,7 @@
+# Classic survival resources
+
+These rules apply to `classic-mission.html`. The guided Mission 1 expedition uses observations and a report instead; see [Mission 1 science](mission1-science.md).
+
 Battery — Your electricity
 
 Starts at 3, maximum 9. Sunlight generates power, while running the habitat and sending reports consume it.
