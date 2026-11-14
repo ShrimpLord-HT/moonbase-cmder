@@ -9,13 +9,30 @@
   <link rel="stylesheet" href="surface/surface.css">
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js"}}</script>
   <script src="shared/game.js" defer></script>
-  <script type="module" src="surface/scene3d.js"></script>
+  <script src="shared/surface-run.js" defer></script>
+  <script type="module">
+    import("./surface/scene3d.js").catch(error => {
+      document.querySelector("#loading").textContent = "Surface link unavailable. Check your connection and WebGL support, or use the 2D dashboard above.";
+      console.error(error);
+    });
+  </script>
 </head>
 <body data-phase="briefing">
+  <dialog id="radio-boot" aria-labelledby="boot-title">
+    <div class="uplink">
+      <div class="receiver" aria-hidden="true"><div class="lunar-disc"></div><i></i></div>
+      <div class="radio-copy">
+        <small class="eyebrow">Surface radio · incoming transmission</small>
+        <h2 id="boot-title">Moonbase,<br><em>do you copy?</em></h2>
+        <p class="reply">Outpost here. Reading you clear.</p>
+        <button id="skip-radio" autofocus>Skip to dashboard ↗</button>
+      </div>
+    </div>
+  </dialog>
   <main id="scene" aria-label="Interactive lunar outpost"></main>
-  <header><span class="brand"><i></i> Moonbase <strong>Commander</strong></span><a href="./index.html">Classic mission ↗</a></header>
+  <header><span class="brand"><i></i> Moonbase <strong>Commander</strong></span><nav class="surface-nav"><a href="./index.html#missions">← Missions</a><a href="./dashboard.html">2D dashboard ↗</a></nav></header>
   <section id="briefing">
-    <small class="eyebrow">Tutorial <span>/</span> Lunar outpost</small>
+    <small class="eyebrow" tabindex="-1" id="dashboard-label">Mission dashboard <span>/</span> Tutorial</small>
     <h1>Keep the lights on.<br>Bring the science <em>home.</em></h1>
     <p>Walk to communications to send a report. Use the habitat console to manage power and survive three shifts.</p>
     <div id="timeline" aria-label="Shift forecast"></div>
@@ -42,7 +59,20 @@
     <button data-action="save">Save power <span>1 energy · −1 oxygen</span></button>
     <button id="close">Back to surface</button>
   </dialog>
-  <dialog id="ending"><div id="result" role="status" hidden></div><button id="restart" class="primary">Restart mission ↻</button></dialog>
+  <dialog id="ending"><div id="result" role="status" hidden></div><a class="debrief-link" href="./index.html#missions">Back to mission selection ↗</a><a class="debrief-link" href="./dashboard.html">View 2D dashboard</a><button id="restart" class="primary">Replay mission ↻</button></dialog>
+  <script>
+    // The radio intro can finish while the surface renderer is still loading.
+    const radioBoot = document.querySelector("#radio-boot");
+    if (!new URLSearchParams(location.search).has("new") && location.hash !== "#resume" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      radioBoot.showModal();
+      const arrival = setTimeout(() => radioBoot.close(), 3200);
+      document.querySelector("#skip-radio").onclick = () => radioBoot.close();
+      radioBoot.addEventListener("close", () => {
+        clearTimeout(arrival);
+        document.querySelector("#dashboard-label").focus();
+      }, { once: true });
+    }
+  </script>
 </body>
 </html>
 

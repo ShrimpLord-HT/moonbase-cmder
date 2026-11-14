@@ -98,6 +98,8 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
     checkStation();
   }
   $("deploy").onclick = () => {
+    surfaceRun.begin();
+    history.replaceState(null, "", location.pathname + "#resume");
     setPhase("descent");
     descentStart = performance.now();
     $("briefing").hidden = true; $("skip").hidden = false;
@@ -194,6 +196,7 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
   // The action button's existing game.js listener runs before this bubbled click.
   consoleBox.addEventListener("click", event => {
     if (!event.target.closest("[data-action]") || phase !== "station") return;
+    surfaceRun.record(event.target.closest("[data-action]").dataset.action);
     consoleBox.close();
     const finished = !$("result").hidden;
     setPhase(finished ? "finished" : "walk");
@@ -203,10 +206,11 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
     sunlight.intensity = 0.22;
     sunlight.color.setHex(0xa2b5dd);
     for (const s of stations) s.lamp.intensity = 10;
-    if (finished) $("ending").showModal();
+    if (finished) location.assign("./index.html#missions");
   });
   $("ending").addEventListener("cancel", e => e.preventDefault());
   $("restart").addEventListener("click", () => {
+    surfaceRun.begin();
     $("ending").close();
     sunlight.intensity = 3.2; sunlight.color.setHex(0xffedcf);
     for (const s of stations) s.lamp.intensity = 2;
@@ -264,6 +268,31 @@ export function runTutorial({ THREE, scene, camera, renderer, sunlight, groundHe
   // Only the visible astronaut casts a moving shadow.
   renderer.shadowMap.autoUpdate = false;
   renderer.shadowMap.needsUpdate = true;
+  addEventListener("pagehide", () => {
+    if (phase === "walk" || phase === "station") {
+      surfaceRun.checkpoint({ x: suit.position.x, z: suit.position.z, yaw, pitch, third, shiftLocked });
+    }
+  });
+  if (location.hash === "#resume") {
+    const saved = surfaceRun.replay();
+    if (saved) {
+      land();
+      const pose = saved.pose;
+      if (pose && canStand(pose.x, pose.z) && Number.isFinite(pose.yaw) && Number.isFinite(pose.pitch)) {
+        suit.position.set(pose.x, groundHeight(pose.x, pose.z), pose.z);
+        yaw = pose.yaw; pitch = pose.pitch;
+        if (pose.third) changeView();
+        setShiftLock(third && pose.shiftLocked);
+        aimCamera(); checkStation();
+      }
+      if (mission.shift) {
+        sunlight.intensity = 0.22; sunlight.color.setHex(0xa2b5dd);
+        for (const s of stations) s.lamp.intensity = 10;
+      }
+      if (mission.reports) $("objective").textContent = "Report sent. Use the amber Habitat console to survive the remaining shifts.";
+      if (mission.finished) { setPhase("finished"); $("ending").showModal(); }
+    }
+  }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       cancelAnimationFrame(pendingFrame);
