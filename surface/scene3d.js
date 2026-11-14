@@ -32,15 +32,18 @@ const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x173957, roughnes
 const panelLine = new THREE.MeshStandardMaterial({ color: 0x6d9abd, roughness: 0.4, metalness: 0.35 });
 
 // Hemisphere fill softens shadows; directional light acts as sunlight.
-scene.add(new THREE.HemisphereLight(0xb8c9df, 0x25272b, 1.1));
+scene.add(new THREE.HemisphereLight(0xb8c9df, 0x25272b, 0.55));
 const sunlight = new THREE.DirectionalLight(0xffedcf, 3.2);
-sunlight.position.set(-8, 14, 7);
+sunlight.position.set(-24, 5, 18);
 sunlight.castShadow = true;
 sunlight.shadow.mapSize.set(1024, 1024);
 sunlight.shadow.camera.left = -18;
 sunlight.shadow.camera.right = 18;
 sunlight.shadow.camera.top = 18;
 sunlight.shadow.camera.bottom = -18;
+sunlight.shadow.camera.far = 90;
+sunlight.shadow.bias = -0.0002;
+sunlight.shadow.normalBias = 0.035;
 scene.add(sunlight);
 
 // Shape a subdivided plane into shallow impact bowls and raised rims.
@@ -74,7 +77,21 @@ land.computeVertexNormals();
 regolith.vertexColors = true;
 const ground = new THREE.Mesh(land, regolith);
 ground.receiveShadow = true;
+ground.castShadow = true;
 scene.add(ground);
+// A small, credited Blue Marble gives the first walk a glimpse of home.
+const earth = new THREE.Mesh(new THREE.CircleGeometry(1.05, 48), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+earth.position.set(-12, 13, -28);
+earth.lookAt(camera.position);
+earth.visible = false;
+scene.add(earth);
+new THREE.TextureLoader().load("./launch/assets/earth-blue-marble.jpg", texture => {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  earth.material.map = texture;
+  earth.material.needsUpdate = true;
+  earth.visible = true;
+  dispatchEvent(new Event("surfaceassetready"));
+}, undefined, () => { /* The expedition remains playable if this image is unavailable. */ });
 // Dome habitat uses a short cylinder base and an upper-half sphere shell.
 const habitat = new THREE.Group();
 const base = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.38, 0.32, 32), metal);

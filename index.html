@@ -12,8 +12,12 @@
   <title>Moonbase Commander | Welcome, Commander</title>
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="launch/style.css">
+  <link rel="preload" href="launch/assets/moon-color.jpg" as="image">
   <script src="shared/surface-run.js" defer></script>
   <script src="launch/menu.js" defer></script>
+  <script type="module">
+    import("./launch/moon.js").catch(() => document.documentElement.classList.add("moon-static"));
+  </script>
 </head>
 <body>
   <header class="site-header">
@@ -22,9 +26,13 @@
   </header>
   <main>
     <section class="intro-screen" id="intro" aria-labelledby="intro-title">
-      <div class="orbital" aria-hidden="true"><div class="moon-disc"></div><i></i></div>
+      <div class="moon-stage" id="moon-view">
+        <div class="moon-fallback" aria-hidden="true"></div>
+        <span class="globe-label" aria-hidden="true">01 / LUNA <i></i></span>
+        <div class="globe-controls" hidden><span id="moon-help">Drag to explore · ← →</span><button id="moon-pause" type="button" aria-pressed="false">Pause rotation</button></div>
+      </div>
       <div class="intro-copy">
-        <p class="eyebrow">Incoming transmission <span>/</span> Lunar outpost</p>
+        <p class="eyebrow"><i class="signal-dot" aria-hidden="true"></i> Incoming transmission <span>/</span> Lunar outpost</p>
         <h1 id="intro-title" tabindex="-1">Moonbase,<br><em>do you copy?</em></h1>
         <p class="radio-reply">OUTPOST HERE. READING YOU CLEAR.</p>
         <p>A small crew. A distant world. You're in command. Keep your outpost alive and bring the science home.</p>
@@ -40,7 +48,7 @@
       <div id="mission-result" class="result-banner" role="status" hidden><span aria-hidden="true">◈</span><div><h2 id="result-title"></h2><p id="result-message"></p></div></div>
       <div class="mission-grid">
         <article class="mission-card available" aria-labelledby="mission-one-title">
-          <div class="mission-visual" aria-hidden="true"><span class="tag" id="mission-status">Ready to deploy</span><span class="visual-number">01</span><div class="outpost"></div></div>
+          <div class="mission-visual"><img src="launch/assets/mission-outpost.jpg" alt="NASA concept illustration of astronauts and equipment at the lunar South Pole" loading="lazy" width="1024" height="576"><span class="tag" id="mission-status">Ready to deploy</span><span class="visual-number" aria-hidden="true">01</span><a class="image-credit" href="https://www.nasa.gov/blogs/missions/2020/10/28/lunar-living-nasas-artemis-base-camp-concept/" target="_blank" rel="noopener noreferrer">NASA · Surface concept ↗</a></div>
           <div class="mission-content">
             <p class="mission-number">Mission 01 · Tutorial</p>
             <h2 id="mission-one-title">Lunar outpost</h2>
@@ -50,11 +58,11 @@
           </div>
         </article>
         <article class="mission-card locked" aria-labelledby="mission-two-title">
-          <div class="mission-visual" aria-hidden="true"><span class="tag">Coming soon</span><span class="visual-number">02</span><div class="crater-mark"></div></div>
+          <div class="mission-visual"><img src="launch/assets/mission-crater.jpg" alt="Shackleton Crater mosaic showing its crater rim and interior, from LROC and ShadowCam" loading="lazy" width="985" height="985"><span class="tag">Coming soon</span><span class="visual-number" aria-hidden="true">02</span><a class="image-credit" href="https://www.nasa.gov/missions/lro/nasa-moon-camera-mosaic-sheds-light-on-lunar-south-pole/" target="_blank" rel="noopener noreferrer">NASA / KARI / ASU · Shackleton ↗</a></div>
           <div class="mission-content"><p class="mission-number">Mission 02</p><h2 id="mission-two-title">Beyond the outpost</h2><p>Your next assignment is on the horizon. More missions are being prepared.</p><div class="mission-meta"><span>Awaiting briefing</span></div><button class="button" type="button" disabled>Coming soon</button></div>
         </article>
         <article class="mission-card locked" aria-labelledby="mission-three-title">
-          <div class="mission-visual" aria-hidden="true"><span class="tag">Coming soon</span><span class="visual-number">03</span><div class="relay-mark"></div></div>
+          <div class="mission-visual"><img src="launch/assets/mission-orbiter.jpg" alt="Artist's rendering of NASA's Lunar Reconnaissance Orbiter above the Moon" loading="lazy" width="1240" height="510"><span class="tag">Coming soon</span><span class="visual-number" aria-hidden="true">03</span><a class="image-credit" href="https://astrobiology.nasa.gov/missions/lro/" target="_blank" rel="noopener noreferrer">NASA / GSFC · LRO illustration ↗</a></div>
           <div class="mission-content"><p class="mission-number">Mission 03</p><h2 id="mission-three-title">The next frontier</h2><p>New challenges. New discoveries. Stand by for your next transmission.</p><div class="mission-meta"><span>Awaiting briefing</span></div><button class="button" type="button" disabled>Coming soon</button></div>
         </article>
       </div>
@@ -63,6 +71,6 @@
       <noscript><p>Enable JavaScript to play a mission.</p></noscript>
     </section>
   </main>
-  <footer><span>Moonbase Commander · Educational prototype</span><a href="./credits.html">AI-assisted · Credits</a></footer>
+  <footer><span>Moonbase Commander · Educational prototype</span><a href="./credits.html">AI-assisted · Credits</a><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noopener noreferrer">Moon surface: NASA / GSFC / ASU ↗</a></footer>
 </body>
 </html>
