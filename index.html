@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#091321">
+
   <title>Moonbase Commander | Junior Astronaut Trainer</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="game.js" defer></script>
+  <link rel="stylesheet" href="classic/style.css">
+  <script src="shared/game.js" defer></script>
 </head>
+
 <body>
   <div class="stars" aria-hidden="true"></div>
   <main class="app">
@@ -38,7 +40,10 @@
         <div class="panel-heading"><span>02 / POWER RESERVES</span><span class="metric-tag">LIVE</span></div>
         <div class="metric-row"><div><span class="metric-number" id="battery">3</span><span class="metric-unit"> / 9 units</span></div><span class="metric-symbol">ϟ</span></div>
         <div class="meter" aria-label="Battery level"><div id="battery-bar" style="width:33.33%"></div></div>
-        <p class="metric-note">Habitat systems use <b>2</b> energy each shift.</p>
+        <p class="metric-note">
+          Normal operation: cost 2 energy per shift.<br>
+          Save Power: cost 1 energy per shift.
+        </p>
       </div>
       <div class="panel oxygen-panel">
         <div class="panel-heading"><span>03 / LIFE SUPPORT</span><span class="metric-tag">CREW SAFE</span></div>
@@ -55,7 +60,7 @@
         <p class="helper">Choose one action. The forecast and costs apply to this shift immediately.</p>
         <div class="choices" id="choices">
           <button type="button" class="choice primary" data-action="report">
-            <span class="choice-icon">↗</span><span class="choice-text"><b>Send report</b><small>Transmit scientific findings</small></span><span class="cost">−2 energy</span>
+            <span class="choice-icon">↗</span><span class="choice-text"><b>Send report</b><small>Transmit scientific findings</small></span><span class="cost">−4 energy</span>
           </button>
           <button type="button" class="choice" data-action="hold">
             <span class="choice-icon">⏸</span><span class="choice-text"><b>Hold steady</b><small>Keep normal operations running</small></span><span class="cost">No extra cost</span>
