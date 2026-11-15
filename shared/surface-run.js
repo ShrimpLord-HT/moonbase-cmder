@@ -10,6 +10,7 @@ const surfaceRun = (() => {
       const saved = JSON.parse(raw);
       const state = Mission1.restore(saved?.state);
       run = state ? { state, pose: saved.pose || null } : null;
+      sessionSaved = Boolean(state);
     } catch { /* Keep this page's in-memory run when storage is blocked. */ }
     return run;
   }
@@ -29,7 +30,7 @@ const surfaceRun = (() => {
     try {
       const saved = JSON.parse(localStorage.getItem(journalKey));
       const state = Mission1.restore(saved?.state);
-      if (state?.reported) journal = { state };
+      if (state?.reported) { journal = { state }; journalSaved = true; }
     } catch { /* The current entry is still readable without storage. */ }
     return journal;
   }

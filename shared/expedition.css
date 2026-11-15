@@ -39,3 +39,47 @@ body.show-movement-pad #help{display:none}
 @media(max-height:490px){body.show-movement-pad[data-expedition="3d"] .expedition-tools{bottom:45px}body.show-movement-pad[data-expedition="3d"] #use{bottom:35%}}
 @media(max-height:490px) and (pointer:coarse){body[data-expedition="3d"] #help{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}.pip-dialog::backdrop{backdrop-filter:none}}
+
+/* Scanner and evidence review share the same controls in both views. */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+#pip-message { min-height:5.2em; }
+#pip-reveal { padding:6px 10px; font-size:11px; margin:0 0 12px; }
+#scan-preview { height:180px; position:relative; overflow:hidden; touch-action:none; border:1px solid #627e89; border-radius:8px; background:radial-gradient(ellipse at center,#52606a,#172a32 65%); outline-offset:3px; }
+#scan-preview::before { content:""; position:absolute; inset:0; opacity:.2; background:repeating-linear-gradient(0deg,transparent 0 29px,#a6dcdf 30px),repeating-linear-gradient(90deg,transparent 0 29px,#a6dcdf 30px); }
+.scan-crosshair { position:absolute; left:50%; top:50%; width:70px; height:70px; transform:translate(-50%,-50%); border:2px dashed #c8d9db; border-radius:50%; }
+#scan-target { position:absolute; left:50%; top:50%; width:42px; height:36px; border-radius:35% 55% 28% 40%; background:linear-gradient(125deg,#aab9bf,#5c6977 60%,#293d48); box-shadow:inset 3px 3px 0 #d0d9d440,0 4px 16px #0006; }
+.aligned .scan-crosshair { border-color:#9ce8c8; border-style:solid; }
+.scan-sweep { display:none; position:absolute; inset:0; background:linear-gradient(0deg,transparent 45%,#8ae5f160 49%,#c5ffff 50%,transparent 52%); }
+.is-scanning .scan-sweep { display:block; animation:scanner-sweep 1.4s linear infinite; }
+progress { accent-color:#8ae5f1; width:100%; height:10px; display:block; margin:14px 0; }
+#scan-instruction { font-size:12px; }
+#evidence-review { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
+#evidence-review article { border:1px solid #54727c; background:#10232d; padding:16px; border-radius:8px; }
+#evidence-review article>span { font-size:32px; color:var(--amber); }
+#evidence-review h3 { font-size:15px; line-height:1.3; margin:8px 0; }
+#evidence-review p { font-size:13px; }
+#evidence-review .review-conclusion { grid-column:1/-1; border-left:3px solid var(--amber); padding:12px; background:#24362f; }
+#uplink { padding:20px; text-align:center; color:#8ae5f1; background:#10232d; border-radius:8px; }
+#uplink>span { display:block; font-size:36px; letter-spacing:12px; animation:uplink-breathe 1s ease-in-out infinite; }
+body[data-expedition="3d"] .pip-dialog.is-scanning { margin:10vh 3vw auto auto; width:min(390px,94vw); }
+body[data-expedition="3d"] .pip-dialog.is-scanning::backdrop { background:#03090e30; backdrop-filter:none; }
+body[data-expedition="3d"] .pip-dialog.is-scanning #scan-preview { height:100px; }
+#reticle.scan-ready { width:46px; height:46px; border:2px solid #9ce8c8; border-radius:50%; background:transparent; transform:translate(-50%,-50%); }
+@keyframes scanner-sweep { from { transform:translateY(-95%); } to { transform:translateY(95%); } }
+@keyframes uplink-breathe { 50% { opacity:.4; } }
+@media(max-width:480px) { #evidence-review { gap:8px; } #evidence-review article { padding:10px; } .pip-dialog { max-height:90dvh; } }
+@media(prefers-reduced-motion:reduce) { .scan-sweep,#uplink>span { animation:none!important; } .scan-sweep { background:#8ae5f112; } }
+
+/* Match the scanner preview to the samples under the surface instruments. */
+#scan-preview[data-site="sunlit"] { background:radial-gradient(ellipse at center,#5a4b39,#201e1a 75%); }
+#scan-preview[data-site="sunlit"] #scan-target {
+  background:repeating-linear-gradient(28deg,transparent 0 8px,#49392e85 9px 11px,transparent 12px 19px),repeating-radial-gradient(ellipse at 24% 35%,#d0ae7b 0 2px,#ab8862 3px 5px,#816445 6px 7px);
+  border-radius:25% 43% 22% 35%;
+  box-shadow:inset 3px 4px 0 #ead0a366,0 4px 16px #0009;
+}
+#scan-preview[data-site="shadow"] { background:radial-gradient(ellipse at center,#304f63,#101d2b 75%); }
+#scan-preview[data-site="shadow"] #scan-target {
+  background:repeating-linear-gradient(55deg,transparent 0 10px,#ddffff 11px 12px,#8cccd380 13px 15px,transparent 16px 24px),repeating-linear-gradient(-35deg,transparent 0 15px,#ddffffb3 16px 17px,transparent 18px 29px),linear-gradient(125deg,#a6c9dd,#4d7792 55%,#304d68);
+  border-radius:35% 55% 28% 40%;
+  box-shadow:inset 3px 3px 0 #e6ffff99,0 4px 16px #0009;
+}
