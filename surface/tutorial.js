@@ -1,5 +1,5 @@
 // The shared expedition controller owns discoveries, radio, and reports.
-export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stations, solids, marker, pipHead }) {
+export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stations, solids, marker, pipHead, animateEquipment }) {
   const $ = id => document.getElementById(id);
   const canvas = renderer.domElement;
   const clamp = THREE.MathUtils.clamp;
@@ -28,6 +28,17 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
     legs.push(part(new THREE.CapsuleGeometry(0.106, 0.37), white, side * 0.13, 0.33, 0, suit));
     arms.push(part(new THREE.CapsuleGeometry(0.085, 0.28), white, side * 0.29, 0.83, 0));
   }
+  // Collar, boots, controls, and a wrist scanner clarify the astronaut at game scale.
+  part(new THREE.TorusGeometry(0.18, 0.04, 8, 20), dark, 0, 1.12, 0).rotation.x = Math.PI / 2;
+  part(new THREE.BoxGeometry(0.25, 0.2, 0.06), dark, 0, 0.88, -0.23);
+  part(new THREE.BoxGeometry(0.16, 0.07, 0.02), new THREE.MeshBasicMaterial({ color: 0x8ae5f1 }), 0, 0.91, -0.27);
+  for (const side of [-1, 1]) {
+    part(new THREE.BoxGeometry(0.21, 0.13, 0.3), dark, side * 0.13, 0.07, -0.04, suit);
+    part(new THREE.SphereGeometry(0.11, 12, 8), dark, side * 0.29, 0.77, 0);
+    part(new THREE.CylinderGeometry(0.06, 0.06, 0.35, 10), white, side * 0.13, 0.86, 0.34);
+  }
+  part(new THREE.BoxGeometry(0.15, 0.12, 0.18), dark, -0.32, 0.57, -0.08);
+  part(new THREE.BoxGeometry(0.1, 0.04, 0.02), gold, -0.32, 0.58, -0.18);
   scene.add(suit);
   suit.position.copy(start);
   suit.visible = false;
@@ -43,7 +54,7 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
   const introFocus = new THREE.Vector3();
   const landingEye = start.clone().add(new THREE.Vector3(0, 1.32, 0));
   const landingTarget = landingEye.clone().add(new THREE.Vector3(0, Math.tan(pitch), -1));
-  let pendingFrame = 0, previous = 0;
+  let pendingFrame = 0, previous = 0, scanInProgress = false;
   function requestFrame() {
     if (!pendingFrame && !document.hidden) {
       if (!previous) previous = performance.now();
@@ -89,7 +100,7 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
     if (third && shiftLocked) camera.lookAt(target.copy(camera.position).add(direction));
     else camera.lookAt(target.copy(eye).addScaledVector(direction, third ? 2.4 : 1));
   }
-  function land() {
+  function land(announce = true) {
     setPhase("walk");
     suit.position.copy(start); suit.rotation.y = yaw = 0; pitch = -0.06;
     $("briefing").hidden = $("skip").hidden = true;
@@ -97,7 +108,10 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
     updateNavigation();
     aimCamera();
     checkStation();
-    ExpeditionUI.welcome();
+    if (announce) {
+      if (ExpeditionUI.state.reported) ExpeditionUI.celebration();
+      else ExpeditionUI.welcome();
+    }
   }
   $("deploy").onclick = () => {
     history.replaceState(null, "", location.pathname + "#resume");
@@ -174,7 +188,7 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
   }
   function updateNavigation() {
     const next = Mission1.next(ExpeditionUI.state);
-    marker.visible = !ExpeditionUI.state.reported;
+    marker.visible = !ExpeditionUI.state.reported && !scanInProgress;
     marker.position.set(next.x, groundHeight(next.x, next.z), next.z);
     const dx = next.x - suit.position.x, dz = next.z - suit.position.z;
     $("waypoint-name").textContent = `${next.name} · ${Math.round(Math.hypot(dx, dz))} m`;
@@ -184,19 +198,33 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
   function checkStation() {
     const next = stations.filter(station => Math.hypot(station.x - suit.position.x, station.z - suit.position.z) <= 1.8)
       .sort((a, b) => Math.hypot(a.x - suit.position.x, a.z - suit.position.z) - Math.hypot(b.x - suit.position.x, b.z - suit.position.z))[0];
-    if (next === nearby) return;
     nearby = next;
     $("use").hidden = !nearby;
-    if (nearby) $("use").textContent = (Mission1.sites[nearby.id] ? "Scan " : nearby.id === "pip" ? "Talk to " : "Explore ") + nearby.name + " · E";
+    const unscanned = nearby && Mission1.sites[nearby.id] && !ExpeditionUI.state.observations.includes(nearby.id);
+    const aligned = !unscanned || scanAligned(nearby);
+    $("reticle").classList.toggle("scan-ready", Boolean(unscanned && aligned));
+    $("use").disabled = !aligned;
+    if (nearby) $("use").textContent = (unscanned ? aligned ? "Scan " : "Aim at " : nearby.id === "pip" ? "Talk to " : "Explore ") + nearby.name + " · E";
+  }
+  function scanAligned(station) {
+    const sample = new THREE.Vector3(station.x, groundHeight(station.x, station.z) + 0.6, station.z);
+    const offset = sample.sub(camera.position).normalize();
+    return camera.getWorldDirection(new THREE.Vector3()).dot(offset) > 0.86;
   }
   function use() {
-    if (nearby && phase === "walk") ExpeditionUI.inspect(nearby.id);
+    if (!nearby || phase !== "walk" || $("use").disabled) return;
+    ExpeditionUI.inspect(nearby.id, { aligned: Boolean(Mission1.sites[nearby.id]) });
   }
   $("use").onclick = use;
   document.addEventListener("expeditiondialog", event => {
     if (event.detail.open && phase === "walk") setPhase("station");
     else if (!event.detail.open && phase === "station") setPhase("walk");
   });
+  document.addEventListener("expeditionscan", ({ detail }) => {
+    scanInProgress = detail.active;
+    updateNavigation();
+  });
+  for (const event of ["expeditionscan", "expeditiontransmit", "expeditionpip"]) document.addEventListener(event, requestFrame);
   document.addEventListener("expeditionchange", () => { updateNavigation(); requestFrame(); });
   $("return-pip").onclick = () => {
     suit.position.copy(start); suit.rotation.y = yaw = 0; pitch = -0.06;
@@ -210,8 +238,12 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
   };
 
   addEventListener("keydown", e => {
-    if (phase !== "walk" || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (phase !== "walk" || e.target.closest("input, textarea, select") || e.ctrlKey || e.metaKey || e.altKey) return;
     if (["KeyW","KeyA","KeyS","KeyD"].includes(e.code)) { keys.add(e.code); requestFrame(); }
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.code)) {
+      e.preventDefault();
+      look(e.code === "ArrowLeft" ? -35 : e.code === "ArrowRight" ? 35 : 0, e.code === "ArrowUp" ? -25 : e.code === "ArrowDown" ? 25 : 0);
+    }
     if (!e.repeat && e.code === "KeyV") changeView();
     if (!e.repeat && (e.code === "ShiftLeft" || e.code === "ShiftRight")) toggleLock(true);
     if (!e.repeat && e.code === "KeyE") use();
@@ -239,6 +271,7 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
   function look(dx, dy) {
     yaw -= dx * 0.003;
     pitch = clamp(pitch - dy * 0.003, -1.1, 1.05);
+    aimCamera(); checkStation();
     requestFrame();
   }
   canvas.onpointerdown = e => {
@@ -281,7 +314,7 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
   if (location.hash === "#resume") {
     const saved = surfaceRun.load();
     if (saved) {
-      land();
+      land(false);
       const pose = saved.pose;
       if (pose && Number.isFinite(pose.x) && Number.isFinite(pose.z) && canStand(pose.x, pose.z) && Number.isFinite(pose.yaw) && Number.isFinite(pose.pitch)) {
         suit.position.set(pose.x, groundHeight(pose.x, pose.z), pose.z);
@@ -291,7 +324,8 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
         aimCamera(); checkStation();
       }
       updateNavigation();
-
+      if (ExpeditionUI.state.reported) ExpeditionUI.celebration();
+      else ExpeditionUI.welcome();
     }
   }
   document.addEventListener("visibilitychange", () => {
@@ -312,8 +346,9 @@ export function runTutorial({ THREE, scene, camera, renderer, groundHeight, stat
       camera.lookAt(introFocus.lerpVectors(introTarget, landingTarget, eased));
       if (t === 1) land();
     } else if (phase === "walk") walk(dt);
+    const equipmentMoving = animateEquipment(now / 1000, reducedMotion.matches);
     renderer.render(scene, camera);
-    if (phase === "descent" || (phase === "walk" && ((third && !reducedMotion.matches) || keys.size))) requestFrame();
+    if (equipmentMoving || phase === "descent" || (phase === "walk" && ((third && !reducedMotion.matches) || keys.size))) requestFrame();
     else previous = 0;
   }
 }
