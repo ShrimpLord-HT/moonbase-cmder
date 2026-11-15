@@ -1,7 +1,7 @@
 {
   "format_version": 1,
   "project": "Moonbase Commander",
-  "updated": "2026-11-14",
+  "updated": "2026-11-15",
   "disclosure_page": "credits.html",
   "ai_assistance": {
     "tools": ["ChatGPT", "Codex"],
@@ -9,7 +9,7 @@
     "activities": [
       "Mission brainstorming and refinement",
       "HTML, CSS, and JavaScript generation and revision",
-      "Procedural 3D geometry, animations, and interface visuals through code",
+      "Procedural 3D geometry, scanner and transmission animations, equipment detail, and interface visuals through code",
       "Pip dialogue, mission briefings, and educational text",
       "Fictional training scanner readings and report wording",
       "Documentation and automated test development"
