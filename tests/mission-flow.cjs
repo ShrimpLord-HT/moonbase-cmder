@@ -39,6 +39,11 @@ for (const order of [["shadow", "sunlit"], ["sunlit", "shadow"]]) {
   assert.equal(saved.pose.third, true);
   state = Mission1.observe(saved.state, order[1]);
   assert.equal(Mission1.next(state).id, "communications");
+  assert.equal(Mission1.submit(state).reported, false, "Review is required before reporting");
+  state = Mission1.review(state);
+  current.update(state);
+  current = page(session, local);
+  assert.equal(current.load().state.reviewed, true, "Review survives a view switch");
   state = Mission1.submit(state);
   current.update(state);
   current.saveJournal(state);
@@ -70,7 +75,7 @@ const blockedContext = vm.createContext({ Mission1,
 vm.runInContext(fs.readFileSync(path.join(root, "shared/surface-run.js"), "utf8"), blockedContext);
 const blocked = vm.runInContext("surfaceRun", blockedContext);
 let state = blocked.begin().state;
-state = Mission1.submit(Mission1.observe(Mission1.observe(state, "shadow"), "sunlit"));
+state = Mission1.submit(Mission1.review(Mission1.observe(Mission1.observe(state, "shadow"), "sunlit")));
 blocked.update(state); blocked.saveJournal(state);
 assert.equal(blocked.load().state.reported, true);
 assert.equal(blocked.getJournal().state.reported, true);
@@ -96,4 +101,10 @@ function classicRun(actions) {
 }
 assert.equal(classicRun(["report", "save", "save"]).result, "result win");
 assert.equal(classicRun(["report", "hold", "hold"]).result, "result lose");
-console.log("Passed: both scan orders, report gating, shared progress/pose, replay, persistent journal, invalid/blocked storage, and classic win/loss.");
+
+assert.equal(Mission1.restore({ observations: ["shadow", "sunlit"], reported: true }).reviewed, true);
+assert.equal(Mission1.restore({ observations: ["shadow"], reported: false }).reviewed, false);
+assert.equal(Mission1.review(Mission1.create()).reviewed, false);
+assert.equal(Mission1.restore({ observations: [], reported: false, reviewed: true }).reviewed, false);
+
+console.log("Passed: both scan orders, review gating, legacy saves, shared progress/pose, replay, persistent journal, invalid/blocked storage, and classic win/loss.");

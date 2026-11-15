@@ -17,20 +17,23 @@ const Mission1 = (() => {
       source: "https://www.jpl.nasa.gov/news/ice-confirmed-at-the-moons-poles/"
     }
   };
-  function create() { return { observations: [], reported: false, welcomeSeen: false }; }
+  function create() { return { observations: [], reported: false, reviewed: false, welcomeSeen: false }; }
   function restore(value) {
     if (!value || !Array.isArray(value.observations) || value.observations.length > 2 ||
         !value.observations.every(id => Object.hasOwn(sites, id)) ||
         new Set(value.observations).size !== value.observations.length ||
         typeof value.reported !== "boolean" || (value.reported && value.observations.length !== 2)) return null;
-    return { observations: [...value.observations], reported: value.reported, welcomeSeen: value.welcomeSeen === true };
+    return { observations: [...value.observations], reported: value.reported, reviewed: value.reported || (value.observations.length === 2 && value.reviewed === true), welcomeSeen: value.welcomeSeen === true };
   }
   function observe(state, id) {
     if (!Object.hasOwn(sites, id) || state.reported || state.observations.includes(id)) return state;
     return { ...state, observations: [...state.observations, id] };
   }
+  function review(state) {
+    return state.observations.length === 2 ? { ...state, reviewed: true } : state;
+  }
   function submit(state) {
-    return state.observations.length === 2 ? { ...state, reported: true } : state;
+    return state.observations.length === 2 && state.reviewed ? { ...state, reported: true } : state;
   }
   function next(state) {
     return Object.values(sites).find(site => !state.observations.includes(site.id)) ||
@@ -38,9 +41,9 @@ const Mission1 = (() => {
   }
   function objective(state) {
     if (state.reported) return "Your finding is home. Open your discovery journal!";
-    if (state.observations.length === 2) return "Both scans collected! Send your finding from Communications.";
+    if (state.observations.length === 2) return "Both scans collected! Review your evidence at Communications.";
     return `${state.observations.length ? "Compare your finding" : "Your first discovery awaits"}: scan the ${next(state).name.toLowerCase()}.`;
   }
-  return { sites, report, create, restore, observe, submit, next, objective };
+  return { sites, report, create, restore, observe, review, submit, next, objective };
 })();
 if (typeof module !== "undefined") module.exports = Mission1;
